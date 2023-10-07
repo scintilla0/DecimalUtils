@@ -1,5 +1,6 @@
 import static java.math.RoundingMode.*;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -9,6 +10,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +19,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Copyright (c) 2023 scintilla0 (<a href="https://github.com/scintilla0">https://github.com/scintilla0</a>)<br>
@@ -2280,6 +2284,181 @@ public class DecimalUtil {
 		return sumObject;
 	}
 
+	/**
+	 * An instance class for managing multiple option components with one <b>int</b> unique combined id.
+	 */
+	public static class CombinedIdManager implements Serializable {
+
+		private final int combinationCount;
+		private final List<Map<Integer, Object>> componentContainer;
+		private final List<BiPredicate<Object, Object>> comparatorContainer;
+
+		/**
+		 * Prepares all combinations and comparators.
+		 * @param componentLists All component lists.
+		 */
+		public CombinedIdManager(List<?>... componentLists) {
+			notEmptyCheck(componentLists);
+			if (Arrays.stream(componentLists).anyMatch(componentList -> componentList == null || componentList.isEmpty())) {
+				throw new IllegalArgumentException("Empty component list is not permitted");
+			}
+			combinationCount = Arrays.stream(componentLists).map(List::size).reduce(1, (product, element) -> product * element);
+			componentContainer = new ArrayList<>();
+			comparatorContainer = new ArrayList<>();
+			BiPredicate<Object, Object> defaultComparator = nullConsideredComparator(null);
+			for (int count = 0; count < componentLists.length; count ++) {
+				List<?> componentList = componentLists[count];
+				int multiplier = IntStream.range(0, count).reduce(1, (product, element) -> product * componentLists[element].size());
+				Map<Integer, Object> componentMap = IntStream.range(0, componentList.size()).boxed()
+						.collect(Collectors.toMap(index -> index * multiplier, componentList::get));
+				componentContainer.add(componentMap);
+				comparatorContainer.add(defaultComparator);
+			}
+		}
+
+		/**
+		 * Pushes an equality comparator for the component for the specified index.<br>
+		 * If a component's equality comparator is not pushed, it will use {@code equals()} by default.
+		 * <pre><b><i>Eg.:</i></b>&#9;Object[] cA = {0, 1, 2, 3};
+		 * &#9;Object[] cB = {0, 4, 8, 12};
+		 * &#9;Object[] cC = {0, 16, 32, 48};
+		 * &#9;CombinedIdManager manager = new CombinedIdManager(cA, cB, cC);
+		 * &#9;manager.pushComparator(1, int.class, (x, y) -> x == (-y));
+		 * &#9;int combinedId = manager.encode(1, -4, 32); -> 37</pre>
+		 * @param <ObjectType> The class of the specified component.
+		 * @param componentTypeIndex The index of component to be push equality comparator.
+		 * 		This index is same as the index of component arguments when you created the manager instance.
+		 * @param objectClass The class object of the specified component.
+		 * 		You can write proper code in comparator only when use a correct <b>objectClass</b>.
+		 * @param comparator Assigned comparator.
+		 */
+		@SuppressWarnings("unchecked")
+		public <ObjectType> void pushComparator(int componentTypeIndex, Class<ObjectType> objectClass, BiPredicate<ObjectType, ObjectType> comparator) {
+			if (componentTypeIndex < 0 || componentTypeIndex >= componentContainer.size()) {
+				throw new IllegalArgumentException("Component type index doesn't exist");
+			} else if (!EmbeddedReflectiveUtil.matchType(componentContainer.get(componentTypeIndex).values().iterator().next(), objectClass)) {
+				throw new IllegalArgumentException("Comparator class doesn't match component class");
+			}
+			comparatorContainer.set(componentTypeIndex, (BiPredicate<Object, Object>) nullConsideredComparator(comparator));
+		}
+
+		/**
+		 * Encodes unique combined id according to the indexes of the selected component options.
+		 * <pre><b><i>Eg.:</i></b>&#9;Object[] cA = {0, 1, 2, 3};
+		 * &#9;Object[] cB = {0, 4, 8, 12};
+		 * &#9;Object[] cC = {0, 16, 32, 48};
+		 * &#9;CombinedIdManager manager = new CombinedIdManager(cA, cB, cC);
+		 * &#9;int combinedId = manager.encode(1, 1, 2); -> 37</pre>
+		 * @param selectedIndexes The indexes of the selected component options in every component.
+		 * 		This index is same as the index of the options in every component when you created the manager instance.
+		 * 		The index count must match component type count.
+		 * @return <b>int</b> Encoded unique combined id.
+		 */
+		public int encodeWithIndex(int... selectedIndexes) {
+			notEmptyCheck(selectedIndexes);
+			if (selectedIndexes.length != componentContainer.size()) {
+				throw new IllegalArgumentException("Component count doesn't match component type count");
+			}
+			int combinedId = 0;
+			for (int iteratingIndex = 0; iteratingIndex < selectedIndexes.length; iteratingIndex ++) {
+				int index = selectedIndexes[iteratingIndex];
+				Set<Integer> componentIdSet = componentContainer.get(iteratingIndex).keySet();
+				if (index < 0 || index > componentIdSet.size()) {
+					throw new IllegalArgumentException("Index " + index + "(" + iteratingIndex + ") doesn't exist");
+				}
+				int selectedId = componentIdSet.stream().sorted().skip(index).findFirst().orElse(0);
+				combinedId += selectedId;
+			}
+			return combinedId;
+		}
+
+		/**
+		 * Encodes unique combined id according to the selected component options.
+		 * <pre><b><i>Eg.:</i></b>&#9;Object[] cA = {0, 1, 2, 3};
+		 * &#9;Object[] cB = {0, 4, 8, 12};
+		 * &#9;Object[] cC = {0, 16, 32, 48};
+		 * &#9;CombinedIdManager manager = new CombinedIdManager(cA, cB, cC);
+		 * &#9;int combinedId = manager.encode(1, 4, 32); -> 37</pre>
+		 * @param selectedComponents The selected component options in every component.
+		 * 		If the selected component option count is less than component type count, then the rest will be 0.
+		 * @return <b>int</b> Encoded unique combined id.
+		 */
+		public int encode(Object... selectedComponents) {
+			notEmptyCheck(selectedComponents);
+			if (selectedComponents.length > componentContainer.size()) {
+				throw new IllegalArgumentException("Component count exceeds component type count");
+			}
+			int combinedId = 0;
+			for (int index = 0; index < componentContainer.size(); index ++) {
+				Object selectedComponent = selectedComponents[index];
+				if (selectedComponent != null) {
+					Map<Integer, Object> componentMap = componentContainer.get(index);
+					BiPredicate<Object, Object> comparator = comparatorContainer.get(index);
+					final int finalIndex = index;
+					int selectedId = componentMap.entrySet().stream().filter(entry -> comparator.test(entry.getValue(), selectedComponent))
+							.findFirst().orElseThrow(() -> new IllegalArgumentException("Component " + finalIndex + " doesn't exist")).getKey();
+					combinedId += selectedId;
+				}
+			}
+			return combinedId;
+		}
+
+		/**
+		 * Decodes unique combined id to fetch the selected component options.
+		 * <pre><b><i>Eg.:</i></b>&#9;Object[] cA = {0, 1, 2, 3};
+		 * &#9;Object[] cB = {0, 4, 8, 12};
+		 * &#9;Object[] cC = {0, 16, 32, 48};
+		 * &#9;CombinedIdManager manager = new CombinedIdManager(cA, cB, cC);
+		 * &#9;Object[] selectedComponents = manager.decode(35); -> [3, 0, 32]</pre>
+		 * @param combinedId Unique combined id.
+		 * @return The selected component options in every component.
+		 */
+		public Object[] decode(int combinedId) {
+			if (combinedId < 0) {
+				throw new IllegalArgumentException("CombinedId should not be less than 0");
+			} else if (combinedId > combinationCount) {
+				throw new IllegalArgumentException("CombinedId should not be greater than component count: " + combinationCount);
+			}
+			List<Object> selectedComponents = new ArrayList<>();
+			for (int index = componentContainer.size() - 1; index >= 0; index --) {
+				Map<Integer, Object> componentMap = componentContainer.get(index);
+				final int remainingNumeralId = combinedId;
+				int selectedId = componentMap.keySet().stream().filter(componentCode -> componentCode <= remainingNumeralId)
+						.max(Comparator.comparing(Integer::intValue)).orElse(0);
+				selectedComponents.add(componentMap.get(selectedId));
+				combinedId -= selectedId;
+			}
+			Collections.reverse(selectedComponents);
+			return selectedComponents.toArray();
+		}
+
+		private void notEmptyCheck(int[] arguments) {
+			if (arguments == null || arguments.length == 0) {
+				throw new IllegalArgumentException("Invoking with no argument is not permitted");
+			}
+		}
+
+		private void notEmptyCheck(Object[] arguments) {
+			if (arguments == null || arguments.length == 0) {
+				throw new IllegalArgumentException("Invoking with no argument is not permitted");
+			}
+		}
+
+		private <ObjectType> BiPredicate<ObjectType, ObjectType> nullConsideredComparator(BiPredicate<ObjectType, ObjectType> comparator) {
+			final BiPredicate<ObjectType, ObjectType> finalComparator = comparator != null ? comparator : Object::equals;
+			return (comparand1, comparand2) -> {
+				if (comparand1 == null && comparand2 == null) {
+					return true;
+				} else if (comparand1 == null || comparand2 == null) {
+					return false;
+				} else {
+					return finalComparator.test(comparand1, comparand2);
+				}
+			};
+		}
+
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// constants
 
@@ -2578,7 +2757,7 @@ public class DecimalUtil {
 				return null;
 			}
 			if (!returnClass.equals(field.getType()) && !returnClass.equals(Object.class)) {
-				throw new RuntimeException(new IllegalArgumentException("Incorrect return type: " + returnClass.getName()));
+				throw new IllegalArgumentException("Incorrect return type: " + returnClass.getName());
 			}
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
@@ -2597,7 +2776,7 @@ public class DecimalUtil {
 				return;
 			}
 			if (!value.getClass().equals(field.getType()) && !field.getType().equals(Object.class)) {
-				throw new RuntimeException(new IllegalArgumentException("Incorrect value type: " + value.getClass().getName()));
+				throw new IllegalArgumentException("Incorrect value type: " + value.getClass().getName());
 			}
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
@@ -2623,6 +2802,28 @@ public class DecimalUtil {
 				}
 			} catch (NoSuchMethodException | SecurityException outerException) {
 				throw new RuntimeException(outerException);
+			}
+		}
+
+		static boolean matchType(Object object, Class<?> targetClass) {
+			if (targetClass.equals(byte.class) || targetClass.equals(Byte.class)) {
+				return object instanceof Byte;
+			} else if (targetClass.equals(short.class) || targetClass.equals(Short.class)) {
+				return object instanceof Short;
+			} else if (targetClass.equals(int.class) || targetClass.equals(Integer.class)) {
+				return object instanceof Integer;
+			} else if (targetClass.equals(long.class) || targetClass.equals(Long.class)) {
+				return object instanceof Long;
+			} else if (targetClass.equals(float.class) || targetClass.equals(Float.class)) {
+				return object instanceof Float;
+			} else if (targetClass.equals(double.class) || targetClass.equals(Double.class)) {
+				return object instanceof Double;
+			} else if (targetClass.equals(boolean.class) || targetClass.equals(Boolean.class)) {
+				return object instanceof Boolean;
+			} else if (targetClass.equals(char.class) || targetClass.equals(Character.class)) {
+				return object instanceof Character;
+			} else {
+				return targetClass.isInstance(object);
 			}
 		}
 	}
