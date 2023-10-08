@@ -9,6 +9,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EmptyStackException;
@@ -38,7 +39,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.2.6 - 2023-09-29
+ * @version 1.3.1 - 2023-10-08
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2295,20 +2296,20 @@ public class DecimalUtil {
 
 		/**
 		 * Prepares all combinations and comparators.
-		 * @param componentLists All component lists.
+		 * @param componentCollections All component collections.
 		 */
-		public CombinedIdManager(List<?>... componentLists) {
-			notEmptyCheck(componentLists);
-			if (Arrays.stream(componentLists).anyMatch(componentList -> componentList == null || componentList.isEmpty())) {
+		public CombinedIdManager(Collection<?>... componentCollections) {
+			notEmptyCheck(componentCollections);
+			if (Arrays.stream(componentCollections).anyMatch(componentList -> componentList == null || componentList.isEmpty())) {
 				throw new IllegalArgumentException("Empty component list is not permitted");
 			}
-			combinationCount = Arrays.stream(componentLists).map(List::size).reduce(1, (product, element) -> product * element);
+			combinationCount = Arrays.stream(componentCollections).map(Collection::size).reduce(1, (product, element) -> product * element);
 			componentContainer = new ArrayList<>();
 			comparatorContainer = new ArrayList<>();
 			BiPredicate<Object, Object> defaultComparator = nullConsideredComparator(null);
-			for (int count = 0; count < componentLists.length; count ++) {
-				List<?> componentList = componentLists[count];
-				int multiplier = IntStream.range(0, count).reduce(1, (product, element) -> product * componentLists[element].size());
+			for (int count = 0; count < componentCollections.length; count ++) {
+				List<?> componentList = new ArrayList<>(componentCollections[count]);
+				int multiplier = IntStream.range(0, count).reduce(1, (product, element) -> product * componentCollections[element].size());
 				Map<Integer, Object> componentMap = IntStream.range(0, componentList.size()).boxed()
 						.collect(Collectors.toMap(index -> index * multiplier, componentList::get));
 				componentContainer.add(componentMap);
@@ -2344,6 +2345,7 @@ public class DecimalUtil {
 
 		/**
 		 * Encodes unique combined id according to the indexes of the selected component options.
+		 * This method will be invalid if you created manager with unordered component collections.
 		 * <pre><b><i>Eg.:</i></b>&#9;Object[] cA = {0, 1, 2, 3};
 		 * &#9;Object[] cB = {0, 4, 8, 12};
 		 * &#9;Object[] cC = {0, 16, 32, 48};
