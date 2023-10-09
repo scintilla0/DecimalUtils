@@ -39,7 +39,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.1 - 2023-10-08
+ * @version 1.3.2 - 2023-10-09
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2300,7 +2300,7 @@ public class DecimalUtil {
 		 */
 		public CombinedIdManager(Collection<?>... componentCollections) {
 			notEmptyCheck(componentCollections);
-			if (Arrays.stream(componentCollections).anyMatch(componentList -> componentList == null || componentList.isEmpty())) {
+			if (Arrays.stream(componentCollections).anyMatch(componentCollection -> componentCollection == null || componentCollection.isEmpty())) {
 				throw new IllegalArgumentException("Empty component list is not permitted");
 			}
 			combinationCount = Arrays.stream(componentCollections).map(Collection::size).reduce(1, (product, element) -> product * element);

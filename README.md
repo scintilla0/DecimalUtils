@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.2 (2023-10-09)
+*	Variable name correction.
+
 #### 1.3.1 (2023-10-08)
 *	**CombinedIdManager** instance can be created with **Collection**s.
 
