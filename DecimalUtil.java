@@ -39,7 +39,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.2 - 2023-10-09
+ * @version 1.3.3 - 2023-11-29
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -96,6 +96,80 @@ public class DecimalUtil {
 			_log(scale, roundingMode);
 		}
 
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance batch operation
+
+		/**
+		 * Efficiently creates an array of <b>DecimalWrapper</b> objects with the specified size.
+		 * @param arraySize Desired size of the resulting array.
+		 * @return An array of <b>DecimalWrapper</b>.
+		 */
+		public static DecimalWrapper[] createArray(int arraySize) {
+			DecimalWrapper[] resultArray = new DecimalWrapper[arraySize];
+			for (int index = 0; index < arraySize; index ++) {
+				resultArray[index] = new DecimalWrapper();
+			}
+			return resultArray;
+		}
+
+		/**
+		 * Efficiently creates a <b>Map</b> of <b>DecimalWrapper</b> objects with the specified keys.
+		 * @param keys Desired keys of the entries in resulting map.
+		 * @return A <b>DecimalWrapper</b> <b>Map</b>.
+		 */
+		public static Map<String, DecimalWrapper> createMap(String... keys) {
+			Map<String, DecimalWrapper> resultMap = new HashMap<>();
+			for (String key : keys) {
+				resultMap.put(key, new DecimalWrapper());
+			}
+			return resultMap;
+		}
+
+		/**
+		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target array.
+		 * @param targetArray Target array of <b>DecimalWrapper</b> to be cleared.
+		 */
+		public static void clearArray(DecimalWrapper[] targetArray) {
+			for (DecimalWrapper wrapper : targetArray) {
+				wrapper.clear();
+			}
+		}
+
+		/**
+		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target map.
+		 * @param targetMap Target <b>DecimalWrapper</b> <b>Map</b> to be cleared.
+		 */
+		public static void clearMap(Map<String, DecimalWrapper> targetMap) {
+			for (DecimalWrapper wrapper : targetMap.values()) {
+				wrapper.clear();
+			}
+		}
+
+		/**
+		 * Transfers the <b>DecimalWrapper</b> value from one to another element of the same array.
+		 * @param array Target array of <b>DecimalWrapper</b>.
+		 * @param targetIndex Index of the <b>DecimalWrapper</b> to transfer from.
+		 * @param destinationIndex Index of the <b>DecimalWrapper</b> to transfer to.
+		 */
+		public static void transferValue(DecimalWrapper[] array, int targetIndex, int destinationIndex) {
+			array[destinationIndex].add(array[targetIndex]);
+			array[targetIndex].clear();
+		}
+
+		/**
+		 * Transfers the <b>DecimalWrapper</b> value from one to another entry of the same <b>Map</b>.
+		 * @param map Target <b>Map</b> with <b>DecimalWrapper</b> as its parameterized value type.
+		 * @param targetKey Key of the <b>DecimalWrapper</b>'s entry to transfer from.
+		 * @param destinationKey Key of the <b>DecimalWrapper</b>'s entry to transfer to.
+		 */
+		public static void transferValue(Map<String, DecimalWrapper> map, String targetKey, String destinationKey) {
+			map.get(destinationKey).add(map.get(targetKey));
+			map.get(targetKey).clear();
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance calculation
+
 		/**
 		 * Resets reserved values to default settings, and deletes all logs.
 		 */
@@ -105,9 +179,6 @@ public class DecimalUtil {
 			_log("(re)set value to default: " + DEFAULT_VALUE);
 			return this;
 		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance calculation
 
 		/**
 		 * Reverses the sign of the reserved value to its opposite.
@@ -597,77 +668,6 @@ public class DecimalUtil {
 		 */
 		public String getLog() {
 			return this.log.toString();
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance batch operation
-
-		/**
-		 * Efficiently creates an array of <b>DecimalWrapper</b> objects with the specified size.
-		 * @param arraySize Desired size of the resulting array.
-		 * @return An array of <b>DecimalWrapper</b>.
-		 */
-		public static DecimalWrapper[] createArray(int arraySize) {
-			DecimalWrapper[] resultArray = new DecimalWrapper[arraySize];
-			for (int index = 0; index < arraySize; index ++) {
-				resultArray[index] = new DecimalWrapper();
-			}
-			return resultArray;
-		}
-
-		/**
-		 * Efficiently creates a <b>Map</b> of <b>DecimalWrapper</b> objects with the specified keys.
-		 * @param keys Desired keys of the entries in resulting map.
-		 * @return A <b>DecimalWrapper</b> <b>Map</b>.
-		 */
-		public static Map<String, DecimalWrapper> createMap(String... keys) {
-			Map<String, DecimalWrapper> resultMap = new HashMap<>();
-			for (String key : keys) {
-				resultMap.put(key, new DecimalWrapper());
-			}
-			return resultMap;
-		}
-
-		/**
-		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target array.
-		 * @param targetArray Target array of <b>DecimalWrapper</b> to be cleared.
-		 */
-		public static void clearArray(DecimalWrapper[] targetArray) {
-			for (DecimalWrapper wrapper : targetArray) {
-				wrapper.clear();
-			}
-		}
-
-		/**
-		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target map.
-		 * @param targetMap Target <b>DecimalWrapper</b> <b>Map</b> to be cleared.
-		 */
-		public static void clearMap(Map<String, DecimalWrapper> targetMap) {
-			for (DecimalWrapper wrapper : targetMap.values()) {
-				wrapper.clear();
-			}
-		}
-
-		/**
-		 * Transfers the <b>DecimalWrapper</b> value from one to another element of the same array.
-		 * @param array Target array of <b>DecimalWrapper</b>.
-		 * @param targetIndex Index of the <b>DecimalWrapper</b> to transfer from.
-		 * @param destinationIndex Index of the <b>DecimalWrapper</b> to transfer to.
-		 */
-		public static void transferValue(DecimalWrapper[] array, int targetIndex, int destinationIndex) {
-			array[destinationIndex].add(array[targetIndex]);
-			array[targetIndex].clear();
-		}
-
-		/**
-		 * Transfers the <b>DecimalWrapper</b> value from one to another entry of the same <b>Map</b>.
-		 * @param map Target <b>Map</b> with <b>DecimalWrapper</b> as its parameterized value type.
-		 * @param targetKey Key of the <b>DecimalWrapper</b>'s entry to transfer from.
-		 * @param destinationKey Key of the <b>DecimalWrapper</b>'s entry to transfer to.
-		 */
-		public static void transferValue(Map<String, DecimalWrapper> map, String targetKey, String destinationKey) {
-			map.get(destinationKey).add(map.get(targetKey));
-			map.get(targetKey).clear();
 		}
 
 	}
@@ -2218,36 +2218,36 @@ public class DecimalUtil {
 	}
 
 	/**
-	 * Sums up a specified field of the objects in the target list using {@link #parseDecimal(Object)}.
-	 * @param <Type> The object type of the list elements.
-	 * @param objectList Target list to be summed up.
+	 * Sums up a specified field of the objects in the target collection using {@link #parseDecimal(Object)}.
+	 * @param <Type> The object type of the collection elements.
+	 * @param objectCollection Target collection to be summed up.
 	 * @param addendGetter A lambda expression for the method used to get the addend field.
 	 * @return Summed <b>BigDecimal</b> result.
 	 */
-	public static <Type> BigDecimal listSum(List<Type> objectList, Function<Type, Object> addendGetter) {
-		if (objectList == null || objectList.isEmpty()) {
+	public static <Type> BigDecimal collectionSum(Collection<Type> objectCollection, Function<Type, Object> addendGetter) {
+		if (objectCollection == null || objectCollection.isEmpty()) {
 			return null;
 		}
 		DecimalWrapper sum = new DecimalWrapper();
-		objectList.forEach(object -> sum.add(addendGetter.apply(object)));
+		objectCollection.forEach(object -> sum.add(addendGetter.apply(object)));
 		return sum.value();
 	}
 
 	/**
-	 * Sums up the specified fields of the objects in the target list using {@link #parseDecimal(Object)}.<br>
+	 * Sums up the specified fields of the objects in the target collection using {@link #parseDecimal(Object)}.<br>
 	 * If no field name is specified, all calculatable fields are calculated.<br>
 	 * Passing a field name that does not exist in the element type will throw a <b>NoSuchFieldException</b>.
-	 * @param <Type> The object type of the list elements.
-	 * @param objectList Target list to be summed up.
+	 * @param <Type> The object type of the collection elements.
+	 * @param objectCollection Target collection to be summed up.
 	 * @param specifiedFieldNames Names of target fields to be summed up.
 	 * @return A sum object of the element type <b>Type</b>.
 	 */
-	public static <Type> Type listSum(List<Type> objectList, String... specifiedFieldNames) {
-		if (objectList == null || objectList.isEmpty()) {
+	public static <Type> Type collectionSum(Collection<Type> objectCollection, String... specifiedFieldNames) {
+		if (objectCollection == null || objectCollection.isEmpty()) {
 			return null;
 		}
 		@SuppressWarnings("unchecked")
-		Class<Type> typeClass = (Class<Type>) objectList.get(0).getClass();
+		Class<Type> typeClass = (Class<Type>) objectCollection.iterator().next().getClass();
 		Type sumObject = EmbeddedReflectiveUtil.createInstance(typeClass);
 		List<Field> fieldList = new ArrayList<>();
 		Class<?> superTypeClass = typeClass;
@@ -2270,7 +2270,7 @@ public class DecimalUtil {
 		}
 		Map<String, DecimalWrapper> sumMap = new HashMap<>();
 		fieldList.forEach(field -> sumMap.put(field.getName(), new DecimalWrapper(2, DEFAULT_ROUNDING_MODE)));
-		for (Type data : objectList) {
+		for (Type data : objectCollection) {
 			for (Field field : fieldList) {
 				DecimalWrapper sum = sumMap.get(field.getName());
 				Object value = EmbeddedReflectiveUtil.getField(data, field, Object.class);
@@ -2301,7 +2301,7 @@ public class DecimalUtil {
 		public CombinedIdManager(Collection<?>... componentCollections) {
 			notEmptyCheck(componentCollections);
 			if (Arrays.stream(componentCollections).anyMatch(componentCollection -> componentCollection == null || componentCollection.isEmpty())) {
-				throw new IllegalArgumentException("Empty component list is not permitted");
+				throw new IllegalArgumentException("Empty component collection is not permitted");
 			}
 			combinationCount = Arrays.stream(componentCollections).map(Collection::size).reduce(1, (product, element) -> product * element);
 			componentContainer = new ArrayList<>();

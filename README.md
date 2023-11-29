@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.3 (2023-11-29)
+*	**listSum()** changed to **collectionSum()**.
+
 #### 1.3.2 (2023-10-09)
 *	Variable name correction.
 
