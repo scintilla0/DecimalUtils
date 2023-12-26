@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.4 (2023-12-26)
+*	Add methods: **compareAsc()**, **compareDesc()**.
+
 #### 1.3.3 (2023-11-29)
 *	**listSum()** changed to **collectionSum()**.
 
