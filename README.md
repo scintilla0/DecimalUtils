@@ -3,6 +3,10 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.5 (2024-03-01)
+*	All **areSame____()** methods accept multiple arguments.
+*	Add method: **isInScope()**.
+
 #### 1.3.4 (2023-12-26)
 *	Add methods: **compareAsc()**, **compareDesc()**.
 

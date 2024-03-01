@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Copyright (c) 2023 scintilla0 (<a href="https://github.com/scintilla0">https://github.com/scintilla0</a>)<br>
+ * Copyright (c) 2023-2024 scintilla0 (<a href="https://github.com/scintilla0">https://github.com/scintilla0</a>)<br>
  * license MIT License <a href="http://www.opensource.org/licenses/mit-license.html">http://www.opensource.org/licenses/mit-license.html</a><br>
  * license GPL2 License <a href="http://www.gnu.org/licenses/gpl.html">http://www.gnu.org/licenses/gpl.html</a><br>
  * <br>
@@ -39,7 +39,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.4 - 2023-12-26
+ * @version 1.3.5 - 2024-03-01
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -1443,54 +1443,78 @@ public class DecimalUtil {
 	}
 
 	/**
-	 * Evaluates if the two target <b>Integer</b> objects have the same numeric value.
-	 * @param comparand1 Target <b>Integer</b> object to be compared.
-	 * @param comparand2 Target <b>Integer</b> object to be compared.
-	 * @return {@code true} if equal.
-	 */
-	public static boolean areSameInteger(Integer comparand1, Integer comparand2) {
-		return haveSameValue(comparand1, comparand2);
-	}
-
-	/**
-	 * Evaluates if the two target <b>Long</b> objects have the same numeric value.
-	 * @param comparand1 Target <b>Long</b> object to be compared.
-	 * @param comparand2 Target <b>Long</b> object to be compared.
-	 * @return {@code true} if equal.
-	 */
-	public static boolean areSameLong(Long comparand1, Long comparand2) {
-		return haveSameValue(comparand1, comparand2);
-	}
-
-	/**
-	 * Evaluates if the two target <b>Double</b> objects have the same numeric value.
-	 * @param comparand1 Target <b>Double</b> object to be compared.
-	 * @param comparand2 Target <b>Double</b> object to be compared.
-	 * @return {@code true} if equal.
-	 */
-	public static boolean areSameDouble(Double comparand1, Double comparand2) {
-		return haveSameValue(comparand1, comparand2);
-	}
-
-	/**
-	 * Evaluates if the two target <b>BigDecimal</b> objects have the same numeric value.
-	 * @param comparand1 Target <b>BigDecimal</b> object to be compared.
-	 * @param comparand2 Target <b>BigDecimal</b> object to be compared.
-	 * @return {@code true} if equal.
-	 */
-	public static boolean areSameDecimal(BigDecimal comparand1, BigDecimal comparand2) {
-		return haveSameValue(comparand1, comparand2);
-	}
-
-	/**
-	 * Evaluates if the two target decimals have the same numeric value, regardless of their data types.<br>
+	 * Evaluates if the target decimal has the same numeric value as one of the options, regardless of their data types.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param comparandObject1 Target decimal object to be compared.
-	 * @param comparandObject2 Target decimal object to be compared.
-	 * @return {@code true} if equal.
+	 * <pre><b><i>Eg.:</i></b>&#9;isInScope(10, 10, "20", 30L) -> true
+	 * &#9;isInScope(50, 10, "20", 30L) -> false</pre>
+	 * @param targetObject Target decimal object to be compared.
+	 * @param optionObjects Option decimal objects to be compared.
+	 * @return {@code true} if any equal.
 	 */
-	public static boolean haveSameValue(Object comparandObject1, Object comparandObject2) {
-		return compare(comparandObject1, comparandObject2) == 0;
+	public static boolean isInScope(Object targetObject, Object... optionObjects) {
+		return isInScope(targetObject, Arrays.asList(optionObjects));
+	}
+
+	/**
+	 * Evaluates if the target decimal has the same numeric value as one of the options, regardless of their data types.<br>
+	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+	 * <pre><b><i>Eg.:</i></b>&#9;isInScope(10, Arrays.asList(10, "20", 30L)) -> true
+	 * &#9;isInScope(50, Arrays.asList(10, "20", 30L)) -> false</pre>
+	 * @param targetObject Target decimal object to be compared.
+	 * @param optionObjects Option decimal objects to be compared.
+	 * @return {@code true} if any equal.
+	 */
+	public static boolean isInScope(Object targetObject, Collection<Object> optionObjects) {
+		if (optionObjects == null || optionObjects.size() == 0) {
+			return false;
+		}
+		return optionObjects.stream().anyMatch(option -> compare(targetObject, option) == 0);
+	}
+
+	/**
+	 * Evaluates if the target <b>Integer</b> objects have the same numeric value.
+	 * @param comparands Target <b>Integer</b> objects to be compared.
+	 * @return {@code true} if all equal.
+	 */
+	public static boolean areSameInteger(Integer... comparands) {
+		return haveSameValue((Object[]) comparands);
+	}
+
+	/**
+	 * Evaluates if the target <b>Long</b> objects have the same numeric value.
+	 * @param comparands Target <b>Long</b> objects to be compared.
+	 * @return {@code true} if all equal.
+	 */
+	public static boolean areSameLong(Long... comparands) {
+		return haveSameValue((Object[]) comparands);
+	}
+
+	/**
+	 * Evaluates if the target <b>Double</b> objects have the same numeric value.
+	 * @param comparands Target <b>Double</b> objects to be compared.
+	 * @return {@code true} if all equal.
+	 */
+	public static boolean areSameDouble(Double... comparands) {
+		return haveSameValue((Object[]) comparands);
+	}
+
+	/**
+	 * Evaluates if the target <b>BigDecimal</b> objects have the same numeric value.
+	 * @param comparands Target <b>BigDecimal</b> objects to be compared.
+	 * @return {@code true} if all equal.
+	 */
+	public static boolean areSameDecimal(BigDecimal... comparands) {
+		return haveSameValue((Object[]) comparands);
+	}
+
+	/**
+	 * Evaluates if the target decimals have the same numeric value, regardless of their data types.<br>
+	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+	 * @param comparandObjects Target decimal objects to be compared.
+	 * @return {@code true} if all equal.
+	 */
+	public static boolean haveSameValue(Object... comparandObjects) {
+		return Arrays.stream(comparandObjects).allMatch(comparand -> compare(comparandObjects[0], comparand) == 0);
 	}
 
 	/**
