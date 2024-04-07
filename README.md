@@ -3,6 +3,11 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.6 (2024-04-07)
+*	Enhance the reuse of methods.
+*	Unify the naming of variables and arguments.
+*	Minor bug fixes.
+
 #### 1.3.5 (2024-03-01)
 *	All **areSame____()** methods accept multiple arguments.
 *	Add method: **isInScope()**.

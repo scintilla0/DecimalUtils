@@ -39,7 +39,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.5 - 2024-03-01
+ * @version 1.3.6 - 2024-04-07
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -682,31 +682,31 @@ public class DecimalUtil {
 	 * Passing {@code null} will return {@code null}.<br>
 	 * Passing an unsupported argument will throw a <b>NumberFormatException</b>.<br>
 	 * This method may not work properly when passing a <b>DecimalWrapper</b> object in web templates such as <b><i>Thymeleaf</i></b>.
-	 * @param source Target object to be parsed into <b>BigDecimal</b>.
+	 * @param sourceObject Target object to be parsed into <b>BigDecimal</b>.
 	 * @return Parsed <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal parseDecimal(Object source) {
+	public static BigDecimal parseDecimal(Object sourceObject) {
 		BigDecimal result = null;
-		if (source == null) {
+		if (sourceObject == null) {
 			return null;
-		} else if (source instanceof BigDecimal) {
-			result = ((BigDecimal) source).add(ZERO);
-		} else if (source instanceof Integer) {
-			result = new BigDecimal((Integer) source);
-		} else if (source instanceof Long) {
-			result = new BigDecimal((Long) source);
-		} else if (source instanceof Double) {
-			Double sourceDouble = (Double) source;
+		} else if (sourceObject instanceof BigDecimal) {
+			result = ((BigDecimal) sourceObject).add(ZERO);
+		} else if (sourceObject instanceof Integer) {
+			result = new BigDecimal((Integer) sourceObject);
+		} else if (sourceObject instanceof Long) {
+			result = new BigDecimal((Long) sourceObject);
+		} else if (sourceObject instanceof Double) {
+			Double sourceDouble = (Double) sourceObject;
 			String sourceDoubleStr = String.valueOf(sourceDouble);
 			result = new BigDecimal(sourceDoubleStr);
-		} else if (source instanceof String) {
-			String sourceString = (String) source;
+		} else if (sourceObject instanceof String) {
+			String sourceString = (String) sourceObject;
 			BigDecimal sourceStringDcm = EmbeddedStringUtil.str2Decimal(sourceString);
 			if (sourceStringDcm != null) {
 				result = sourceStringDcm;
 			}
-		} else if (source instanceof DecimalWrapper) {
-			result = ((DecimalWrapper) source).value();
+		} else if (sourceObject instanceof DecimalWrapper) {
+			result = ((DecimalWrapper) sourceObject).value();
 		} else {
 			throw new NumberFormatException("Unparseable argument passed in");
 		}
@@ -714,31 +714,27 @@ public class DecimalUtil {
 	}
 
 	/**
-	 * Returns {@link BigDecimal#ZERO} if the target decimal is {@code null}.<br>
+	 * Returns {@code null} if the target decimal equals to {@link BigDecimal#ZERO}.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object to be wrapped.
+	 * @param sourceObject Target decimal object to be wrapped.
 	 * @return Wrapped <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal wrap0(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return ZERO;
+	public static BigDecimal wrapNull(Object sourceObject) {
+		BigDecimal result = parseDecimal(sourceObject);
+		if (areSameDecimal(ZERO, result)) {
+			return null;
 		}
-		return decimal;
+		return result;
 	}
 
 	/**
-	 * Returns {@code null} if the target decimal equals to {@link BigDecimal#ZERO}.<br>
+	 * Returns {@link BigDecimal#ZERO} if the target decimal is {@code null}.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object to be wrapped.
+	 * @param sourceObject Target decimal object to be wrapped.
 	 * @return Wrapped <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal wrapNull(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (areSameDecimal(ZERO, decimal)) {
-			return null;
-		}
-		return decimal;
+	public static BigDecimal wrap0(Object sourceObject) {
+		return ifNullThen(sourceObject, ZERO);
 	}
 
 	/**
@@ -746,16 +742,16 @@ public class DecimalUtil {
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
 	 * <pre><b><i>Eg.:</i></b>&#9;ifNullThen("20", 30) -> [20]
 	 * &#9;ifNullThen("A20", 30) -> [30]</pre>
-	 * @param source1 Primary target decimal object.
-	 * @param source2 Alternative target decimal object.
+	 * @param sourceObject1 Primary target decimal object.
+	 * @param sourceObject2 Alternative target decimal object.
 	 * @return Selected <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal ifNullThen(Object source1, Object source2) {
-		BigDecimal decimal = parseDecimal(source1);
-		if (decimal == null) {
-			decimal = parseDecimal(source2);
+	public static BigDecimal ifNullThen(Object sourceObject1, Object sourceObject2) {
+		BigDecimal result = parseDecimal(sourceObject1);
+		if (result == null) {
+			result = parseDecimal(sourceObject2);
 		}
-		return decimal;
+		return result;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -764,12 +760,12 @@ public class DecimalUtil {
 	/**
 	 * Reverses the sign of the target decimal to its opposite.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object to be negated.
+	 * @param sourceObject Target decimal object to be negated.
 	 * @return Negated <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal minus(Object source) {
-		BigDecimal result = parseDecimal(source);
-		if (source == null) {
+	public static BigDecimal minus(Object sourceObject) {
+		BigDecimal result = parseDecimal(sourceObject);
+		if (result == null) {
 			return null;
 		}
 		return result.negate();
@@ -778,12 +774,12 @@ public class DecimalUtil {
 	/**
 	 * Gets absolute value of the target decimal.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object to get absolute value.
+	 * @param sourceObject Target decimal object to get absolute value.
 	 * @return Absolute <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal absolute(Object source) {
-		BigDecimal result = parseDecimal(source);
-		if (source == null) {
+	public static BigDecimal absolute(Object sourceObject) {
+		BigDecimal result = parseDecimal(sourceObject);
+		if (result == null) {
 			return null;
 		}
 		return result.abs();
@@ -818,10 +814,7 @@ public class DecimalUtil {
 		for (Object addendObject : addendObjects) {
 			BigDecimal addend = parseDecimal(addendObject);
 			if (addend != null) {
-				if (result == null) {
-					result = ZERO;
-				}
-				result = result.add(addend);
+				result = wrap0(result).add(addend);
 			}
 		}
 		return result;
@@ -941,10 +934,7 @@ public class DecimalUtil {
 		for (Object multiplierObject : multiplierObjects) {
 			BigDecimal multiplier = parseDecimal(multiplierObject);
 			if (multiplier != null) {
-				if (result == null) {
-					result = ONE;
-				}
-				result = result.multiply(multiplier);
+				result = ifNullThen(result, ONE).multiply(multiplier);
 			}
 		}
 		return result;
@@ -1305,12 +1295,12 @@ public class DecimalUtil {
 	 * <pre><b><i>Eg.:</i></b>&#9;setScale("41", 2) -> [41.00]
 	 * &#9;setScale("52.84", 0) -> [53]
 	 * &#9;setScale("A10", 2) -> null</pre>
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @param scale Number of decimal places to be retained.
 	 * @return Rounded <b>BigDecimal</b> result.
 	 */
-	public static BigDecimal setScale(Object source, int scale) {
-		return setScale(source, scale, DEFAULT_ROUNDING_MODE);
+	public static BigDecimal setScale(Object sourceObject, int scale) {
+		return setScale(sourceObject, scale, DEFAULT_ROUNDING_MODE);
 	}
 
 	/**
@@ -1320,13 +1310,13 @@ public class DecimalUtil {
 	 * <pre><b><i>Eg.:</i></b>&#9;setScale("41", 2, {@link BigDecimal#ROUND_HALF_UP}) -> [41.00]
 	 * &#9;setScale("52.84", 0, {@link BigDecimal#ROUND_HALF_UP}) -> [53]
 	 * &#9;setScale("A10", 2, {@link BigDecimal#ROUND_HALF_UP}) -> null</pre>
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @param scale Number of decimal places to be retained.
 	 * @param roundingMode Rounding mode using int value preset in <b>BigDecimal</b>.
 	 * @return Rounded <b>BigDecimal</b> result.
 	 */
-	public static BigDecimal setScale(Object source, int scale, int roundingMode) {
-		return setScale(source, scale, valueOf(roundingMode));
+	public static BigDecimal setScale(Object sourceObject, int scale, int roundingMode) {
+		return setScale(sourceObject, scale, valueOf(roundingMode));
 	}
 
 	/**
@@ -1336,13 +1326,13 @@ public class DecimalUtil {
 	 * <pre><b><i>Eg.:</i></b>&#9;setScale("41", 2, {@link RoundingMode#HALF_UP}) -> [41.00]
 	 * &#9;setScale("52.84", 0, {@link RoundingMode#HALF_UP}) -> [53]
 	 * &#9;setScale("A10", 2, {@link RoundingMode#HALF_UP}) -> null</pre>
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @param scale Number of decimal places to be retained.
 	 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode}.
 	 * @return Rounded <b>BigDecimal</b> result.
 	 */
-	public static BigDecimal setScale(Object source, int scale, RoundingMode roundingMode) {
-		BigDecimal result = parseDecimal(source);
+	public static BigDecimal setScale(Object sourceObject, int scale, RoundingMode roundingMode) {
+		BigDecimal result = parseDecimal(sourceObject);
 		if (result == null) {
 			return null;
 		}
@@ -1354,31 +1344,31 @@ public class DecimalUtil {
 
 	/**
 	 * Evaluates if the target <b>BigDecimal</b> object is {@code null} or equals to {@link BigDecimal#ZERO}.
-	 * @param source Target <b>BigDecimal</b> object.
+	 * @param sourceObject Target <b>BigDecimal</b> object.
 	 * @return {@code true} if the target value is {@code null} or equals to {@link BigDecimal#ZERO}.
 	 */
-	public static boolean isNullOr0(BigDecimal source) {
-		return source == null || areSameDecimal(ZERO, source);
+	public static boolean isNullOr0(BigDecimal sourceObject) {
+		return sourceObject == null || areSameDecimal(ZERO, sourceObject);
 	}
 
 	/**
 	 * Evaluates if the target decimal is {@code null} or equals to {@link BigDecimal#ZERO}.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if the target value is {@code null} or equals to {@link BigDecimal#ZERO}.
 	 */
-	public static boolean isUnusableOr0(Object source) {
-		return isNullOr0(parseDecimal(source));
+	public static boolean isUnusableOr0(Object sourceObject) {
+		return isNullOr0(parseDecimal(sourceObject));
 	}
 
 	/**
 	 * Evaluates if the target object can be parsed into a valid <b>BigDecimal</b> object.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if successfully parsed.
 	 */
-	public static boolean isDecimal(Object source) {
-		return parseDecimal(source) != null;
+	public static boolean isDecimal(Object sourceObject) {
+		return parseDecimal(sourceObject) != null;
 	}
 
 	/**
@@ -1387,40 +1377,32 @@ public class DecimalUtil {
 	 * may not have the same value as the original.
 	 * In this case, the evaluating result would be {@code false}.</b></font><br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if successfully parsed.
 	 */
-	public static boolean isInteger(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return false;
-		}
-		return compare(decimal, decimal.intValue()) == 0;
+	public static boolean isInteger(Object sourceObject) {
+		return toInteger(sourceObject) != null;
 	}
 
 	/**
 	 * Evaluates if the target object can be parses into a valid <b>Long</b> object.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if successfully parsed.
 	 */
-	public static boolean isLong(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return false;
-		}
-		return compare(decimal, decimal.longValue()) == 0;
+	public static boolean isLong(Object sourceObject) {
+		return toLong(sourceObject) != null;
 	}
 
 	/**
 	 * Evaluates if the target object can be parsed into a valid natural number,
 	 * i.e. non-negative integral number, which may not be an <b>Integer</b>.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if successfully parsed.
 	 */
-	public static boolean isNaturalNumber(Object source) {
-		BigDecimal decimal = parseDecimal(source);
+	public static boolean isNaturalNumber(Object sourceObject) {
+		BigDecimal decimal = parseDecimal(sourceObject);
 		if (!isLong(decimal)) {
 			return false;
 		}
@@ -1431,11 +1413,11 @@ public class DecimalUtil {
 	/**
 	 * Evaluates if the target object can be parsed into a valid positive integral number, which may not be an <b>Integer</b>.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal object.
+	 * @param sourceObject Target decimal object.
 	 * @return {@code true} if successfully parsed.
 	 */
-	public static boolean isPositiveIntegral(Object source) {
-		BigDecimal decimal = parseDecimal(source);
+	public static boolean isPositiveIntegral(Object sourceObject) {
+		BigDecimal decimal = parseDecimal(sourceObject);
 		if (!isLong(decimal)) {
 			return false;
 		}
@@ -1689,101 +1671,89 @@ public class DecimalUtil {
 	 * Parses and converts the target object into an <b>Integer</b> object.<br>
 	 * Returns {@code null} if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Integer</b> value.
 	 */
-	public static Integer toInteger(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return null;
-		}
-		Integer result = decimal.intValue();
-		if (!haveSameValue(decimal, result)) {
-			return null;
-		}
-		return result;
+	public static Integer toInteger(Object sourceObject) {
+		return toType(sourceObject, BigDecimal::intValue);
 	}
 
 	/**
 	 * Parses and converts the target object into an <b>Integer</b> object.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Integer</b> value.
 	 */
-	public static Integer toIntegerW0(Object source) {
-		return toInteger(wrap0(source));
+	public static Integer toIntegerW0(Object sourceObject) {
+		return toInteger(wrap0(sourceObject));
 	}
 
 	/**
 	 * Parses and converts the target object into a <b>Long</b> object.<br>
 	 * Returns {@code null} if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Long</b> value.
 	 */
-	public static Long toLong(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return null;
-		}
-		Long result = decimal.longValue();
-		if (!haveSameValue(decimal, result)) {
-			return null;
-		}
-		return result;
+	public static Long toLong(Object sourceObject) {
+		return toType(sourceObject, BigDecimal::longValue);
 	}
 
 	/**
 	 * Parses and converts the target object into a <b>Long</b> object.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Long</b> value.
 	 */
-	public static Long toLongW0(Object source) {
-		return toLong(wrap0(source));
+	public static Long toLongW0(Object sourceObject) {
+		return toLong(wrap0(sourceObject));
 	}
 
 	/**
 	 * Parses and converts the target object into a <b>Double</b> object.<br>
 	 * Returns {@code null} if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Double</b> value.
 	 */
-	public static Double toDouble(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return null;
-		}
-		Double result = decimal.doubleValue();
-		if (!haveSameValue(decimal, result)) {
-			return null;
-		}
-		return result;
+	public static Double toDouble(Object sourceObject) {
+		return toType(sourceObject, BigDecimal::doubleValue);
 	}
 
 	/**
 	 * Parses and converts the target object into a <b>Double</b> object.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Converted <b>Double</b> value.
 	 */
-	public static Double toDoubleW0(Object source) {
-		return toDouble(wrap0(source));
+	public static Double toDoubleW0(Object sourceObject) {
+		return toDouble(wrap0(sourceObject));
+	}
+
+	private static <Type> Type toType(Object sourceObject, Function<BigDecimal, Type> parser) {
+		BigDecimal decimal = parseDecimal(sourceObject);
+		if (decimal == null) {
+			return null;
+		}
+		Type result = parser.apply(decimal);
+		if (!haveSameValue(decimal, result)) {
+			return null;
+		}
+		return result;
 	}
 
 	/**
 	 * Parses and converts the target object into a plain <b>String</b> char sequence without any extra operation.<br>
 	 * Returns an empty <b>String</b> char sequence if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String stringify(Object source) {
-		BigDecimal decimal = parseDecimal(source);
+	public static String stringify(Object sourceObject) {
+		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
 			return EMPTY;
 		}
@@ -1794,103 +1764,94 @@ public class DecimalUtil {
 	 * Parses and wraps the target object into a plain <b>String</b> char sequence without any extra operation.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String stringifyW0(Object source) {
-		return stringify(wrap0(source));
+	public static String stringifyW0(Object sourceObject) {
+		return stringify(wrap0(sourceObject));
 	}
 
 	/**
 	 * Parses and wraps the target object into a <b>String</b> char sequence with thousands separators.<br>
 	 * Returns an empty <b>String</b> char sequence if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String dress(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return EMPTY;
-		}
-		return format(decimal, FORMAT_COMMA_0);
+	public static String dress(Object sourceObject) {
+		return format(sourceObject, FORMAT_COMMA_0);
 	}
 
 	/**
 	 * Parses and wraps the target object into a <b>String</b> char sequence with thousands separators.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String dressW0(Object source) {
-		return dress(wrap0(source));
+	public static String dressW0(Object sourceObject) {
+		return dress(wrap0(sourceObject));
 	}
 
 	/**
 	 * Parses and wraps the target object into a <b>String</b> char sequence with thousands separators and 2 decimal places.<br>
 	 * Returns an empty <b>String</b> char sequence if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String dress2DP(Object source) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return EMPTY;
-		}
-		return format(decimal, FORMAT_COMMA_2);
+	public static String dress2DP(Object sourceObject) {
+		return format(sourceObject, FORMAT_COMMA_2);
 	}
 
 	/**
 	 * Parses and wraps the target object into a <b>String</b> char sequence with thousands separators and 2 decimal places.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String dress2DPW0(Object source) {
-		return dress2DP(wrap0(source));
+	public static String dress2DPW0(Object sourceObject) {
+		return dress2DP(wrap0(sourceObject));
 	}
 
 	/**
 	 * Parses and formats the target object into a <b>String</b> char sequence with the specified format.<br>
 	 * Returns an empty <b>String</b> char sequence if the target object cannot be parsed or formatted correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param formatPattern Target number format presented by a <b>String</b> char sequence.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String format(Object source, String formatPattern) {
-		BigDecimal decimal = parseDecimal(source);
-		if (decimal == null) {
-			return EMPTY;
+	public static String format(Object sourceObject, String formatPattern) {
+		if (EmbeddedStringUtil.isNullOrBlank(formatPattern)) {
+			return null;
 		}
-		return new DecimalFormat(formatPattern).format(decimal);
+		return format(sourceObject, new DecimalFormat(formatPattern));
 	}
 
 	/**
 	 * Parses and formats the target object into a <b>String</b> char sequence with the specified format.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param formatPattern Target number format presented by a <b>String</b> char sequence.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String formatW0(Object source, String formatPattern) {
-		return format(wrap0(source), formatPattern);
+	public static String formatW0(Object sourceObject, String formatPattern) {
+		return format(wrap0(sourceObject), formatPattern);
 	}
 
 	/**
 	 * Parses and formats the target object into a <b>String</b> char sequence with the specified format.<br>
 	 * Returns an empty <b>String</b> char sequence if the target object cannot be parsed or formatted correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param format Target number format presented by a {@link DecimalFormat} object.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String format(Object source, DecimalFormat format) {
-		BigDecimal decimal = parseDecimal(source);
+	public static String format(Object sourceObject, DecimalFormat format) {
+		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
 			return EMPTY;
 		}
@@ -1901,12 +1862,12 @@ public class DecimalUtil {
 	 * Parses and formats the target object into a <b>String</b> char sequence with the specified format.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param format Target number format presented by a {@link DecimalFormat} object.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String formatW0(Object source, DecimalFormat format) {
-		return format(wrap0(source), format);
+	public static String formatW0(Object sourceObject, DecimalFormat format) {
+		return format(wrap0(sourceObject), format);
 	}
 
 	/**
@@ -1918,12 +1879,12 @@ public class DecimalUtil {
 	 * &#9;percent("0.25", -2) -> "25.00 %"
 	 * &#9;percent("0.125", 0) -> "12%"
 	 * &#9;percent("0.125", null) -> "12 %"</pre>
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param decimalPlace Number of decimal places to be retained.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String percent(Object source, Integer decimalPlace) {
-		BigDecimal decimal = parseDecimal(source);
+	public static String percent(Object sourceObject, Integer decimalPlace) {
+		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
 			return EMPTY;
 		}
@@ -1949,12 +1910,12 @@ public class DecimalUtil {
 	 * &#9;percentW0("0.25", -2) -> "25.00 %"
 	 * &#9;percentW0("0.125", 0) -> "12%"
 	 * &#9;percentW0("0.125", null) -> "12 %"</pre>
-	 * @param source Target object to be parsed and wrapped.
+	 * @param sourceObject Target object to be parsed and wrapped.
 	 * @param decimalPlace Number of decimal places to be retained.
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
-	public static String percentW0(Object source, Integer decimalPlace) {
-		return percent(wrap0(source), decimalPlace);
+	public static String percentW0(Object sourceObject, Integer decimalPlace) {
+		return percent(wrap0(sourceObject), decimalPlace);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1965,18 +1926,11 @@ public class DecimalUtil {
 	 * Any argument whose parse result is {@code null} will be ignored.<br>
 	 * Returns {@code null} if there is no valid decimal.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param paramObjects Target decimal objects to be compared.
+	 * @param sourceObjects Target decimal objects to be compared.
 	 * @return The maximum <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal max(Object... paramObjects) {
-		BigDecimal result = null;
-		for (Object paramObject : paramObjects) {
-			int compareResult = compare(paramObject, result);
-			if (compareResult == 1 || compareResult == 2) {
-				result = parseDecimal(paramObject);
-			}
-		}
-		return result;
+	public static BigDecimal max(Object... sourceObjects) {
+		return extremum(sourceObjects, 1);
 	}
 
 	/**
@@ -1984,15 +1938,20 @@ public class DecimalUtil {
 	 * Any argument whose parse result is {@code null} will be ignored.<br>
 	 * Returns {@code null} if there is no valid decimal.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param paramObjects Target decimal objects to be compared.
+	 * @param sourceObjects Target decimal objects to be compared.
 	 * @return The minimum <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal min(Object... paramObjects) {
+	public static BigDecimal min(Object... sourceObjects) {
+		return extremum(sourceObjects, -1);
+	}
+
+	private static BigDecimal extremum(Object[] sourceObjects, int direction) {
 		BigDecimal result = null;
-		for (Object paramObject : paramObjects) {
-			int compareResult = compare(paramObject, result);
-			if (compareResult == -1 || compareResult == 2) {
-				result = parseDecimal(paramObject);
+		for (Object sourceObject : sourceObjects) {
+			BigDecimal candidate = parseDecimal(sourceObject);
+			int compareResult = compare(candidate, result);
+			if (compareResult == direction || compareResult == 2) {
+				result = candidate;
 			}
 		}
 		return result;
@@ -2006,11 +1965,11 @@ public class DecimalUtil {
 	 * <pre><b><i>Eg.:</i></b>&#9;average(15, "30", "45", "60") -> [37.5]
 	 * &#9;average(15, "A30", "45", "60") -> [30]
 	 * &#9;average(null, "A30", false, "") -> [0]</pre>
-	 * @param paramObjects Target decimal objects to be evaluated.
+	 * @param sourceObjects Target decimal objects to be evaluated.
 	 * @return Average <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal average(Object... paramObjects) {
-		return quotient(sum(paramObjects), paramObjects.length, SCIENTIFIC_DECIMAL_SCALE).stripTrailingZeros();
+	public static BigDecimal average(Object... sourceObjects) {
+		return quotient(sum(sourceObjects), sourceObjects.length, SCIENTIFIC_DECIMAL_SCALE).stripTrailingZeros();
 	}
 
 	/**
@@ -2021,15 +1980,15 @@ public class DecimalUtil {
 	 * <pre><b><i>Eg.:</i></b>&#9;averageIgnoreNull(15, "30", "45", "60") -> [37.5]
 	 * &#9;averageIgnoreNull(15, "A30", "45", "60") -> [40]
 	 * &#9;averageIgnoreNull(null, "A30", false, "") -> [0]</pre>
-	 * @param paramObjects Target decimal objects to be evaluated.
+	 * @param sourceObjects Target decimal objects to be evaluated.
 	 * @return Average <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal averageIgnoreNull(Object... paramObjects) {
+	public static BigDecimal averageIgnoreNull(Object... sourceObjects) {
 		List<Object> notNullParams = new ArrayList<>();
-		for (Object paramObject : paramObjects) {
-			BigDecimal param = parseDecimal(paramObject);
-			if (param != null) {
-				notNullParams.add(param);
+		for (Object sourceObject : sourceObjects) {
+			BigDecimal decimal = parseDecimal(sourceObject);
+			if (decimal != null) {
+				notNullParams.add(decimal);
 			}
 		}
 		return average(notNullParams.toArray());
@@ -2065,11 +2024,11 @@ public class DecimalUtil {
 	 * Extracts the integral part of the target decimal along with its original sign.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal objects.
+	 * @param sourceObject Target decimal objects.
 	 * @return <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal getIntegralPart(Object source) {
-		return wrap0(source).setScale(DEFAULT_SCALE, DOWN);
+	public static BigDecimal getIntegralPart(Object sourceObject) {
+		return wrap0(sourceObject).setScale(DEFAULT_SCALE, DOWN);
 	}
 
 	/**
@@ -2077,11 +2036,11 @@ public class DecimalUtil {
 	 * Returns {@link BigDecimal#ZERO} if the target decimal has no fractional part.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal objects.
+	 * @param sourceObject Target decimal objects.
 	 * @return <b>BigDecimal</b> value.
 	 */
-	public static BigDecimal getFractionalPart(Object source) {
-		BigDecimal result = wrap0(parseDecimal(source)).subtract(getIntegralPart(source)).stripTrailingZeros();
+	public static BigDecimal getFractionalPart(Object sourceObject) {
+		BigDecimal result = wrap0(parseDecimal(sourceObject)).subtract(getIntegralPart(sourceObject)).stripTrailingZeros();
 		if (areSameDecimal(ZERO, result)) {
 			result = result.setScale(1, HALF_UP);
 		}
@@ -2092,11 +2051,11 @@ public class DecimalUtil {
 	 * Gets the char sequence length of the target decimal's integral part.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal objects.
+	 * @param sourceObject Target decimal objects.
 	 * @return <b>int</b> length.
 	 */
-	public static int getIntegralLength(Object source) {
-		return getIntegralPart(source).abs().toPlainString().length();
+	public static int getIntegralLength(Object sourceObject) {
+		return getIntegralPart(sourceObject).abs().toPlainString().length();
 	}
 
 	/**
@@ -2104,11 +2063,11 @@ public class DecimalUtil {
 	 * Obviously, the result will be {@code 0} if the target decimal has no fractional part.<br>
 	 * Uses {@link BigDecimal#ZERO} as an alternative if the target object cannot be parsed correctly.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * @param source Target decimal objects.
+	 * @param sourceObject Target decimal objects.
 	 * @return <b>int</b> length.
 	 */
-	public static int getFractionalLength(Object source) {
-		BigDecimal fractionalPartAbsoluteValue = getFractionalPart(source).abs().stripTrailingZeros();
+	public static int getFractionalLength(Object sourceObject) {
+		BigDecimal fractionalPartAbsoluteValue = getFractionalPart(sourceObject).abs().stripTrailingZeros();
 		if (areSameDecimal(ZERO, fractionalPartAbsoluteValue)) {
 			return 0;
 		}
