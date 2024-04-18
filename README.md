@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.7 (2024-04-18)
+*	Add method: **select()** and class: **DecimalOption**.
+
 #### 1.3.6 (2024-04-07)
 *	Enhance the reuse of methods.
 *	Unify the naming of variables and arguments.

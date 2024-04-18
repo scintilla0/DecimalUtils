@@ -16,6 +16,7 @@ import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
@@ -39,7 +40,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.6 - 2024-04-07
+ * @version 1.3.7 - 2024-04-18
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -1447,10 +1448,50 @@ public class DecimalUtil {
 	 * @return {@code true} if any equal.
 	 */
 	public static boolean isInScope(Object targetObject, Collection<Object> optionObjects) {
-		if (optionObjects == null || optionObjects.size() == 0) {
+		if (optionObjects == null || optionObjects.isEmpty()) {
 			return false;
 		}
-		return optionObjects.stream().anyMatch(option -> compare(targetObject, option) == 0);
+		BigDecimal target = parseDecimal(targetObject);
+		return optionObjects.stream().anyMatch(option -> compare(target, option) == 0);
+	}
+
+	/**
+	 * Selects the map value corresponding to its map key with the same decimal value as the target object.<br>
+	 * Returns null if there is no matched option.<br>
+	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+	 * <pre><b><i>Eg.:</i></b>&#9;select(10, [[10, "a"], ["20", "b"], [30, "c"]]) -> "a"
+	 * &#9;select(10, [[0, "a"], ["20", "b"], [30, "c"]]) -> null
+	 * &#9;select(10, []) -> null</pre>
+	 * @param <Type> The object type of the return map value.
+	 * @param targetObject Target decimal object to be compared.
+	 * @param optionMap Option map to be searched in.
+	 * @return selected value.
+	 */
+	public static <Type> Type select(Object targetObject, Map<Object, Type> optionMap) {
+		if (optionMap == null || optionMap.isEmpty()) {
+			return null;
+		}
+		BigDecimal target = parseDecimal(targetObject);
+		return optionMap.entrySet().stream().filter(entry -> compare(target, entry.getKey()) == 0).map(Entry::getValue).findFirst().orElse(null);
+	}
+
+	/**
+	 * Selects the scope value corresponding to its scope key with the same decimal value as the target object.<br>
+	 * Returns null if there is no matched option.<br>
+	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+	 * <pre><b><i>Eg.:</i></b>&#9;select(10, DecimalOption.build(10, "a").and("20", "b")) -> "a"
+	 * &#9;select(10, DecimalOption.build(0, "a").and("20", "b")) -> null
+	 * &#9;select(10, null) -> null</pre>
+	 * @param <Type> The object type of the return scope value.
+	 * @param targetObject Target decimal object to be compared.
+	 * @param scope Option scope to be searched in.
+	 * @return selected value.
+	 */
+	public static <Type> Type select(Object targetObject, DecimalOption<Type> scope) {
+		if (scope == null) {
+			return null;
+		}
+		return select(targetObject, scope.optionMap);
 	}
 
 	/**
@@ -2314,6 +2355,46 @@ public class DecimalUtil {
 			EmbeddedReflectiveUtil.setField(sumObject, field, value);
 		}
 		return sumObject;
+	}
+
+	/**
+	 * A wrapper class of <b>&lt;Type&gt; Map&lt;Object, Type&gt;</b>.<br>
+	 * Used in {@link #select(Object, DecimalOption)} to quickly create an option scope.
+	 * <pre><b><i>Eg.:</i></b>&#9;DecimalOption&lt;String&gt; scope = DecimalOption.build(10, "a").and("20", "b"));
+	 * &#9;&#9;&#9; -> [[10, "a"], [20, "b"]]
+	 * &#9;DecimalOption&lt;Integer&gt; scope = DecimalOption.build("1", 1).and("2", 2));
+	 * &#9;&#9;&#9; -> [[1, 1], [2, 2]]</pre>
+	 */
+	public static class DecimalOption<Type> {
+
+		private final Map<Object, Type> optionMap;
+
+		private DecimalOption() {
+			this.optionMap = new HashMap<>();
+		}
+
+		/**
+		 * Builds an option scope and assigns the first entry.<br>
+		 * @param <Type> The object type of the value.
+		 * @param keyObject Option key Object.
+		 * @param value Option value.
+		 */
+		public static <Type> DecimalOption<Type> build(Object keyObject, Type value) {
+			DecimalOption<Type> decimalOption = new DecimalOption<>();
+			decimalOption.and(keyObject, value);
+			return decimalOption;
+		}
+
+		/**
+		 * Assigns a new entry.<br>
+		 * @param keyObject Option key Object.
+		 * @param value Option value.
+		 */
+		public DecimalOption<Type> and(Object keyObject, Type value) {
+			this.optionMap.put(keyObject, value);
+			return this;
+		}
+
 	}
 
 	/**
