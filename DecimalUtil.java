@@ -40,7 +40,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.7 - 2024-04-18
+ * @version 1.3.8 - 2024-04-23
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2870,35 +2870,36 @@ public class DecimalUtil {
 			if (object == null) {
 				return null;
 			}
-			if (!returnClass.equals(field.getType()) && !returnClass.equals(Object.class)) {
+			if (!returnClass.isAssignableFrom(field.getType()) && !returnClass.equals(Object.class)) {
 				throw new IllegalArgumentException("Incorrect return type: " + returnClass.getName());
 			}
-			boolean accessible = field.isAccessible();
+			boolean isAccessible = field.isAccessible();
 			field.setAccessible(true);
 			try {
 				@SuppressWarnings("unchecked")
 				ReturnType result = (ReturnType) field.get(object);
 				return result;
 			} catch (IllegalArgumentException | IllegalAccessException exception) {
-				return null;
+				throw new RuntimeException(exception);
 			} finally {
-				field.setAccessible(accessible);
+				field.setAccessible(isAccessible);
 			}
 		}
 		static <ObjectType> void setField(ObjectType object, Field field, Object value) {
 			if (object == null) {
 				return;
 			}
-			if (!value.getClass().equals(field.getType()) && !field.getType().equals(Object.class)) {
+			if (value != null && (!field.getType().isAssignableFrom(value.getClass()) && !field.getType().equals(Object.class))) {
 				throw new IllegalArgumentException("Incorrect value type: " + value.getClass().getName());
 			}
-			boolean accessible = field.isAccessible();
+			boolean isAccessible = field.isAccessible();
 			field.setAccessible(true);
 			try {
 				field.set(object, value);
-			} catch (IllegalArgumentException | IllegalAccessException ignored) {
+			} catch (IllegalArgumentException | IllegalAccessException exception) {
+				throw new RuntimeException(exception);
 			} finally {
-				field.setAccessible(accessible);
+				field.setAccessible(isAccessible);
 			}
 		}
 
@@ -2909,13 +2910,13 @@ public class DecimalUtil {
 				constructor.setAccessible(true);
 				try {
 					return constructor.newInstance();
-				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException exception) {
+				} catch (InstantiationException | IllegalAccessException | InvocationTargetException exception) {
 					throw new RuntimeException(exception);
 				} finally {
 					constructor.setAccessible(isAccessible);
 				}
-			} catch (NoSuchMethodException | SecurityException outerException) {
-				throw new RuntimeException(outerException);
+			} catch (NoSuchMethodException exception) {
+				throw new RuntimeException(exception);
 			}
 		}
 
