@@ -42,7 +42,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.9 - 2024-04-25
+ * @version 1.3.10 - 2024-04-28
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2870,7 +2870,7 @@ public class DecimalUtil {
 			if (isNullOrBlank(source)) {
 				return source;
 			}
-			return source.substring(0, 1).toUpperCase(Locale.getDefault()) + source.substring(1, source.length());
+			return source.substring(0, 1).toUpperCase(Locale.getDefault()) + source.substring(1);
 		}
 	}
 
@@ -2878,7 +2878,7 @@ public class DecimalUtil {
 	private static class EmbeddedReflectiveUtil {
 		static <ObjectType, ReturnType> ReturnType getField(ObjectType object, String fieldName, Class<ReturnType> returnClass) {
 			try {
-				Method method = fetchMethodThrows(object.getClass(), "get" + EmbeddedStringUtil.upperCamelCase(fieldName), returnClass);
+				Method method = fetchMethodThrows(object.getClass(), "get" + EmbeddedStringUtil.upperCamelCase(fieldName));
 				return (ReturnType) method.invoke(object);
 			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException caught) {
 				Field field = fetchField(object.getClass(), fieldName);

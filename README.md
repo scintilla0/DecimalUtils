@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.10 (2024-04-28)
+*	**collectionSum()** not working properly fixed.
+
 #### 1.3.9 (2024-04-25)
 *	**collectionSum()** invokes get or set method in preference to direct field value.
 
