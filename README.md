@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.11 (2024-04-30)
+*	**EmbeddedReflectiveUtil** updated.
+
 #### 1.3.10 (2024-04-28)
 *	**collectionSum()** not working properly fixed.
 

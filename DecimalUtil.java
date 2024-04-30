@@ -1,10 +1,12 @@
 import static java.math.RoundingMode.*;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -16,7 +18,6 @@ import java.util.Comparator;
 import java.util.EmptyStackException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -42,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.10 - 2024-04-28
+ * @version 1.3.11 - 2024-04-30
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2865,22 +2866,14 @@ public class DecimalUtil {
 				return null;
 			}
 		}
-
-		static String upperCamelCase(String source) {
-			if (isNullOrBlank(source)) {
-				return source;
-			}
-			return source.substring(0, 1).toUpperCase(Locale.getDefault()) + source.substring(1);
-		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private static class EmbeddedReflectiveUtil {
 		static <ObjectType, ReturnType> ReturnType getField(ObjectType object, String fieldName, Class<ReturnType> returnClass) {
 			try {
-				Method method = fetchMethodThrows(object.getClass(), "get" + EmbeddedStringUtil.upperCamelCase(fieldName));
-				return (ReturnType) method.invoke(object);
-			} catch (NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException caught) {
+				return (ReturnType) fetchPropertyDescriptor(object.getClass(), fieldName).getReadMethod().invoke(object);
+			} catch (IntrospectionException | NullPointerException | IllegalAccessException | InvocationTargetException caught) {
 				Field field = fetchField(object.getClass(), fieldName);
 				return getField(object, field, returnClass);
 			}
@@ -2905,11 +2898,10 @@ public class DecimalUtil {
 
 		static <ObjectType> void setField(ObjectType object, String fieldName, Object value) {
 			try {
-				Method method = fetchMethodThrows(object.getClass(), "set" + EmbeddedStringUtil.upperCamelCase(fieldName), value.getClass());
-				method.invoke(object, value);
+				fetchPropertyDescriptor(object.getClass(), fieldName).getWriteMethod().invoke(object, value);
 			} catch (IllegalArgumentException exception) {
 				throw new IllegalArgumentException("Incorrect value type: " + value.getClass().getName());
-			} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException caught) {
+			} catch (IntrospectionException | NullPointerException | IllegalAccessException | InvocationTargetException caught) {
 				Field field = fetchField(object.getClass(), fieldName);
 				setField(object, field, value);
 			}
@@ -2932,6 +2924,11 @@ public class DecimalUtil {
 			}
 		}
 
+		private static PropertyDescriptor fetchPropertyDescriptor(Class<?> objectClass, String fieldName) throws IntrospectionException {
+			return Arrays.stream(Introspector.getBeanInfo(objectClass).getPropertyDescriptors())
+					.filter(property -> property.getName().equals(fieldName)).findAny().orElse(null);
+		}
+
 		private static <ObjectType> Field fetchField(Class<ObjectType> objectClass, String fieldName) {
 			Field field = null;
 			Class<?> superClass = objectClass;
@@ -2947,13 +2944,6 @@ public class DecimalUtil {
 				throw new RuntimeException(new NoSuchFieldException(fieldName));
 			}
 			return field;
-		}
-		private static <ObjectType> Method fetchMethodThrows(Class<ObjectType> objectClass, String methodName, Class<?>... argumentTypes) throws NoSuchMethodException {
-			try {
-				return objectClass.getDeclaredMethod(methodName, argumentTypes);
-			} catch (NoSuchMethodException caught) {
-				return objectClass.getMethod(methodName, argumentTypes);
-			}
 		}
 
 		static <ObjectType> ObjectType createInstance(Class<ObjectType> objectClass) {
