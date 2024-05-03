@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.11 - 2024-04-30
+ * @version 1.3.12 - 2024-05-03
  * @author scintilla0
  */
 public class DecimalUtil {
@@ -2870,7 +2870,7 @@ public class DecimalUtil {
 
 	@SuppressWarnings("unchecked")
 	private static class EmbeddedReflectiveUtil {
-		static <ObjectType, ReturnType> ReturnType getField(ObjectType object, String fieldName, Class<ReturnType> returnClass) {
+		static <ReturnType> ReturnType getField(Object object, String fieldName, Class<ReturnType> returnClass) {
 			try {
 				return (ReturnType) fetchPropertyDescriptor(object.getClass(), fieldName).getReadMethod().invoke(object);
 			} catch (IntrospectionException | NullPointerException | IllegalAccessException | InvocationTargetException caught) {
@@ -2878,7 +2878,7 @@ public class DecimalUtil {
 				return getField(object, field, returnClass);
 			}
 		}
-		private static <ObjectType, ReturnType> ReturnType getField(ObjectType object, Field field, Class<ReturnType> returnClass) {
+		private static <ReturnType> ReturnType getField(Object object, Field field, Class<ReturnType> returnClass) {
 			if (object == null) {
 				return null;
 			}
@@ -2896,7 +2896,7 @@ public class DecimalUtil {
 			}
 		}
 
-		static <ObjectType> void setField(ObjectType object, String fieldName, Object value) {
+		static void setField(Object object, String fieldName, Object value) {
 			try {
 				fetchPropertyDescriptor(object.getClass(), fieldName).getWriteMethod().invoke(object, value);
 			} catch (IllegalArgumentException exception) {
@@ -2906,7 +2906,7 @@ public class DecimalUtil {
 				setField(object, field, value);
 			}
 		}
-		private static <ObjectType> void setField(ObjectType object, Field field, Object value) {
+		private static void setField(Object object, Field field, Object value) {
 			if (object == null) {
 				return;
 			}
@@ -2929,7 +2929,7 @@ public class DecimalUtil {
 					.filter(property -> property.getName().equals(fieldName)).findAny().orElse(null);
 		}
 
-		private static <ObjectType> Field fetchField(Class<ObjectType> objectClass, String fieldName) {
+		private static Field fetchField(Class<?> objectClass, String fieldName) {
 			Field field = null;
 			Class<?> superClass = objectClass;
 			while (field == null && superClass != null && !TOP_SUPER_CLASSES.contains(superClass)) {
