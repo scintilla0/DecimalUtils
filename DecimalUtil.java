@@ -2636,6 +2636,7 @@ public class DecimalUtil {
 		operatorEvaluationMap.put('/', (b, a) -> a.divide(b, DEFAULT_DECIMAL_SCALE, DEFAULT_ROUNDING_MODE));
 		operatorEvaluationMap.put('^', (b, a) -> a.pow(b.intValue()));
 
+		wrapperValueGetterMap.put(DecimalWrapper.class, decimalWrapper -> decimalWrapper);
 		wrapperValueGetterMap.put(BigDecimal.class, DecimalWrapper::value);
 		wrapperValueGetterMap.put(String.class, DecimalWrapper::dress2DP);
 		wrapperValueGetterMap.put(Integer.class, DecimalWrapper::integerValue);
