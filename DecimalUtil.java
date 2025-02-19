@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.12 - 2024-05-03
+ * @version 1.3.13 - 2025-02-11
  * @author scintilla0
  */
 public class DecimalUtil {
