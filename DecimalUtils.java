@@ -43,10 +43,10 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.13 - 2025-02-11
+ * @version 1.3.14 - 2025-03-25
  * @author scintilla0
  */
-public class DecimalUtil {
+public class DecimalUtils {
 
 	/**
 	 * A wrapper class of <b>BigDecimal</b>.<br>
@@ -186,7 +186,7 @@ public class DecimalUtil {
 
 		/**
 		 * Reverses the sign of the reserved value to its opposite.
-		 * @see DecimalUtil#minus(Object)
+		 * @see DecimalUtils#minus(Object)
 		 */
 		public DecimalWrapper negate() {
 			this.value = minus(this.value);
@@ -196,10 +196,10 @@ public class DecimalUtil {
 
 		/**
 		 * Makes the reserved value positive.
-		 * @see DecimalUtil#absolute(Object)
+		 * @see DecimalUtils#absolute(Object)
 		 */
 		public DecimalWrapper absolute() {
-			this.value = DecimalUtil.absolute(this.value);
+			this.value = DecimalUtils.absolute(this.value);
 			_log("absolute", new Object[] {});
 			return this;
 		}
@@ -207,7 +207,7 @@ public class DecimalUtil {
 		/**
 		 * Adds all the target decimals to the reserved value.
 		 * @param addendObjects Target decimal objects to be added.
-		 * @see DecimalUtil#sum(Object...)
+		 * @see DecimalUtils#sum(Object...)
 		 */
 		public DecimalWrapper add(Object... addendObjects) {
 			this.value = sum(this.value, sumReserveNull(addendObjects));
@@ -218,8 +218,8 @@ public class DecimalUtil {
 		/**
 		 * Subtracts all the target decimals from the reserved value.
 		 * @param subtrahendObjects Target decimal objects to be subtracted.
-		 * @see DecimalUtil#sum(Object...)
-		 * @see DecimalUtil#minus(Object)
+		 * @see DecimalUtils#sum(Object...)
+		 * @see DecimalUtils#minus(Object)
 		 */
 		public DecimalWrapper subtract(Object... subtrahendObjects) {
 			this.value = sum(this.value, minus(sumReserveNull(subtrahendObjects)));
@@ -230,7 +230,7 @@ public class DecimalUtil {
 		/**
 		 * Multiplies all the target decimals to the reserved value.
 		 * @param multiplierObjects Target decimal objects to be multiplied.
-		 * @see DecimalUtil#product(Object...)
+		 * @see DecimalUtils#product(Object...)
 		 */
 		public DecimalWrapper multiply(Object... multiplierObjects) {
 			this.value = product(this.value, productReserveNull(multiplierObjects));
@@ -241,7 +241,7 @@ public class DecimalUtil {
 		/**
 		 * Multiplies all the target decimals to the reserved value, and divides by {@code 100} as one of them is a percentage.
 		 * @param multiplierObjects Target decimal objects to be multiplied.
-		 * @see DecimalUtil#productDepercent(Object...)
+		 * @see DecimalUtils#productDepercent(Object...)
 		 */
 		public DecimalWrapper multiplyDepercent(Object... multiplierObjects) {
 			this.value = productDepercent(this.value, productReserveNull(multiplierObjects));
@@ -253,7 +253,7 @@ public class DecimalUtil {
 		 * Divides the reserved value by the target decimal.<br>
 		 * Uses reserved scale and rounding mode.
 		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divide(Object divisorObject) {
 			this.value = quotient(this.value, divisorObject, this.scale, this.roundingMode);
@@ -267,7 +267,7 @@ public class DecimalUtil {
 		 * @param divisorObject Divisor decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divide(Object divisorObject, int scale, int roundingMode) {
 			return divide(divisorObject, scale, valueOf(roundingMode));
@@ -279,7 +279,7 @@ public class DecimalUtil {
 		 * @param divisorObject Divisor decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divide(Object divisorObject, int scale, RoundingMode roundingMode) {
 			setScaleCore(scale, roundingMode);
@@ -291,7 +291,7 @@ public class DecimalUtil {
 		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
 		 * Uses reserved scale and rounding mode.
 		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper dividePercent(Object divisorObject) {
 			this.value = quotientPercent(this.value, divisorObject, this.scale, this.roundingMode);
@@ -305,7 +305,7 @@ public class DecimalUtil {
 		 * @param divisorObject Divisor decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper dividePercent(Object divisorObject, int scale, int roundingMode) {
 			return dividePercent(divisorObject, scale, valueOf(roundingMode));
@@ -317,7 +317,7 @@ public class DecimalUtil {
 		 * @param divisorObject Divisor decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper dividePercent(Object divisorObject, int scale, RoundingMode roundingMode) {
 			setScaleCore(scale, roundingMode);
@@ -329,7 +329,7 @@ public class DecimalUtil {
 		 * Divides the target decimal by the reserved value.<br>
 		 * Uses reserved scale and rounding mode.
 		 * @param dividendObject Dividend decimal object.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisor(Object dividendObject) {
 			this.value = quotient(dividendObject, this.value, this.scale, this.roundingMode);
@@ -343,7 +343,7 @@ public class DecimalUtil {
 		 * @param dividendObject Dividend decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, int roundingMode) {
 			return divideAsDivisor(dividendObject, scale, valueOf(roundingMode));
@@ -355,7 +355,7 @@ public class DecimalUtil {
 		 * @param dividendObject Dividend decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, RoundingMode roundingMode) {
 			setScaleCore(scale, roundingMode);
@@ -367,7 +367,7 @@ public class DecimalUtil {
 		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
 		 * Uses reserved scale and rounding mode.
 		 * @param dividendObject Dividend decimal object.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisorPercent(Object dividendObject) {
 			this.value = quotientPercent(dividendObject, this.value, this.scale, this.roundingMode);
@@ -381,7 +381,7 @@ public class DecimalUtil {
 		 * @param dividendObject Dividend decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, int roundingMode) {
 			return divideAsDivisorPercent(dividendObject, scale, valueOf(roundingMode));
@@ -393,7 +393,7 @@ public class DecimalUtil {
 		 * @param dividendObject Dividend decimal object.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtil#quotient(Object, Object, int, RoundingMode)
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
 		 */
 		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, RoundingMode roundingMode) {
 			setScaleCore(scale, roundingMode);
@@ -404,10 +404,10 @@ public class DecimalUtil {
 		/**
 		 * Divides the reserved value by the target decimal to reserve the remainder.
 		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtil#mod(Object, Object)
+		 * @see DecimalUtils#mod(Object, Object)
 		 */
 		public DecimalWrapper mod(Object divisorObject) {
-			this.value = DecimalUtil.mod(this.value, divisorObject);
+			this.value = DecimalUtils.mod(this.value, divisorObject);
 			_log("mod", divisorObject);
 			return this;
 		}
@@ -415,10 +415,10 @@ public class DecimalUtil {
 		/**
 		 * Divides the target decimal by the reserved value to reserve the remainder.
 		 * @param dividendObject Divisor decimal object.
-		 * @see DecimalUtil#mod(Object, Object)
+		 * @see DecimalUtils#mod(Object, Object)
 		 */
 		public DecimalWrapper modAsDivisor(Object dividendObject) {
-			this.value = DecimalUtil.mod(dividendObject, this.value);
+			this.value = DecimalUtils.mod(dividendObject, this.value);
 			_log("mod", dividendObject);
 			return this;
 		}
@@ -426,11 +426,11 @@ public class DecimalUtil {
 		/**
 		 * Accepts new scale for later calculation.
 		 * @param scale Number of decimal places to be reserved.
-		 * @see DecimalUtil#setScale(Object, int, RoundingMode)
+		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
 		 */
 		public DecimalWrapper setScale(int scale) {
 			setScaleCore(scale, this.roundingMode);
-			this.value = DecimalUtil.setScale(this.value, scale, this.roundingMode);
+			this.value = DecimalUtils.setScale(this.value, scale, this.roundingMode);
 			_log(scale, this.roundingMode);
 			return this;
 		}
@@ -439,7 +439,7 @@ public class DecimalUtil {
 		 * Accepts the new scale and rounding mode for later calculation.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtil#setScale(Object, int)
+		 * @see DecimalUtils#setScale(Object, int)
 		 */
 		public DecimalWrapper setScale(int scale, int roundingMode) {
 			return setScale(scale, valueOf(roundingMode));
@@ -449,11 +449,11 @@ public class DecimalUtil {
 		 * Accepts the new scale and rounding mode for later calculation.
 		 * @param scale Number of decimal places to be reserved.
 		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtil#setScale(Object, int, RoundingMode)
+		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
 		 */
 		public DecimalWrapper setScale(int scale, RoundingMode roundingMode) {
 			setScaleCore(scale, roundingMode);
-			this.value = DecimalUtil.setScale(this.value, scale, roundingMode);
+			this.value = DecimalUtils.setScale(this.value, scale, roundingMode);
 			_log(scale, roundingMode);
 			return this;
 		}
@@ -471,7 +471,7 @@ public class DecimalUtil {
 		 * Evaluates if the reserved value is equal to the target decimal.
 		 * @param comparandObject Target decimal object to be compared.
 		 * @return {@code true} if equal.
-		 * @see DecimalUtil#compare(Object, Object)
+		 * @see DecimalUtils#compare(Object, Object)
 		 */
 		public boolean isEquivalentTo(Object comparandObject) {
 			return compareW0(this.value, comparandObject) == 0;
@@ -481,7 +481,7 @@ public class DecimalUtil {
 		 * Evaluates if the reserved value is greater than the target decimal.
 		 * @param comparandObject Target decimal object to be compared.
 		 * @return {@code true} if greater than.
-		 * @see DecimalUtil#compare(Object, Object)
+		 * @see DecimalUtils#compare(Object, Object)
 		 */
 		public boolean isGreaterThan(Object comparandObject) {
 			return compareW0(this.value, comparandObject) == 1;
@@ -491,7 +491,7 @@ public class DecimalUtil {
 		 * Evaluates if the reserved value is greater than or equal to the target decimal.
 		 * @param comparandObject Target decimal object to be compared.
 		 * @return {@code true} if not less than.
-		 * @see DecimalUtil#compare(Object, Object)
+		 * @see DecimalUtils#compare(Object, Object)
 		 */
 		public boolean isGreaterEqual(Object comparandObject) {
 			int compareResult = compareW0(this.value, comparandObject);
@@ -502,7 +502,7 @@ public class DecimalUtil {
 		 * Evaluates if the reserved value is less than the target decimal.
 		 * @param comparandObject Target decimal object to be compared.
 		 * @return {@code true} if less than.
-		 * @see DecimalUtil#compare(Object, Object)
+		 * @see DecimalUtils#compare(Object, Object)
 		 */
 		public boolean isLessThan(Object comparandObject) {
 			return compareW0(this.value, comparandObject) == -1;
@@ -512,7 +512,7 @@ public class DecimalUtil {
 		 * Evaluates if the reserved value is less than or equal to the target decimal.
 		 * @param comparandObject Target decimal object to be compared.
 		 * @return {@code true} if not greater than.
-		 * @see DecimalUtil#compare(Object, Object)
+		 * @see DecimalUtils#compare(Object, Object)
 		 */
 		public boolean isLessEqual(Object comparandObject) {
 			int compareResult = compareW0(this.value, comparandObject);
@@ -533,7 +533,7 @@ public class DecimalUtil {
 		/**
 		 * Extracts the integral part of the reserved value.
 		 * @return <b>BigDecimal</b> value.
-		 * @see DecimalUtil#getIntegralPart(Object)
+		 * @see DecimalUtils#getIntegralPart(Object)
 		 */
 		public BigDecimal integralPart() {
 			return getIntegralPart(this.value);
@@ -542,7 +542,7 @@ public class DecimalUtil {
 		/**
 		 * Extracts the fractional part of the reserved value.
 		 * @return <b>BigDecimal</b> value.
-		 * @see DecimalUtil#getFractionalPart(Object)
+		 * @see DecimalUtils#getFractionalPart(Object)
 		 */
 		public BigDecimal fractionalPart() {
 			return getFractionalPart(this.value);
@@ -551,7 +551,7 @@ public class DecimalUtil {
 		/**
 		 * Wraps the reserved value into an <b>Integer</b> object.
 		 * @return Wrapped <b>Integer</b> value.
-		 * @see DecimalUtil#toInteger(Object)
+		 * @see DecimalUtils#toInteger(Object)
 		 */
 		public Integer integerValue() {
 			return toInteger(this.value);
@@ -560,7 +560,7 @@ public class DecimalUtil {
 		/**
 		 * Wraps the reserved value into a <b>Long</b> object.
 		 * @return Wrapped <b>Long</b> value.
-		 * @see DecimalUtil#toLong(Object)
+		 * @see DecimalUtils#toLong(Object)
 		 */
 		public Long longValue() {
 			return toLong(this.value);
@@ -569,7 +569,7 @@ public class DecimalUtil {
 		/**
 		 * Wraps the reserved value into a <b>Double</b> object.
 		 * @return Wrapped <b>Double</b> value.
-		 * @see DecimalUtil#toDouble(Object)
+		 * @see DecimalUtils#toDouble(Object)
 		 */
 		public Double doubleValue() {
 			return toDouble(this.value);
@@ -578,28 +578,28 @@ public class DecimalUtil {
 		/**
 		 * Wraps the reserved value into a plain <b>String</b> char sequence without any extra operation.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#stringify(Object)
+		 * @see DecimalUtils#stringify(Object)
 		 */
 		public String stringify() {
-			return DecimalUtil.stringify(this.value);
+			return DecimalUtils.stringify(this.value);
 		}
 
 		/**
 		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#dress(Object)
+		 * @see DecimalUtils#dress(Object)
 		 */
 		public String dress() {
-			return DecimalUtil.dress(this.value);
+			return DecimalUtils.dress(this.value);
 		}
 
 		/**
 		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators and 2 decimal places.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#dress2DP(Object)
+		 * @see DecimalUtils#dress2DP(Object)
 		 */
 		public String dress2DP() {
-			return DecimalUtil.dress2DP(this.value);
+			return DecimalUtils.dress2DP(this.value);
 		}
 
 		/**
@@ -607,10 +607,10 @@ public class DecimalUtil {
 		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
 		 * @param formatPattern Target number format presented by a <b>String</b> char sequence.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#format(Object, String)
+		 * @see DecimalUtils#format(Object, String)
 		 */
 		public String format(String formatPattern) {
-			return DecimalUtil.format(this.value, formatPattern);
+			return DecimalUtils.format(this.value, formatPattern);
 		}
 
 		/**
@@ -618,10 +618,10 @@ public class DecimalUtil {
 		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
 		 * @param format Target number format presented by a {@link DecimalFormat} object.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#format(Object, String)
+		 * @see DecimalUtils#format(Object, String)
 		 */
 		public String format(DecimalFormat format) {
-			return DecimalUtil.format(this.value, format);
+			return DecimalUtils.format(this.value, format);
 		}
 
 		/**
@@ -629,10 +629,10 @@ public class DecimalUtil {
 		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
 		 * @param decimalPlace Number of decimal places to be retained.
 		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtil#percent(Object, Integer)
+		 * @see DecimalUtils#percent(Object, Integer)
 		 */
 		public String percent(Integer decimalPlace) {
-			return DecimalUtil.percent(this.value, decimalPlace);
+			return DecimalUtils.percent(this.value, decimalPlace);
 		}
 
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -705,9 +705,13 @@ public class DecimalUtil {
 			result = new BigDecimal(sourceDoubleStr);
 		} else if (sourceObject instanceof String) {
 			String sourceString = (String) sourceObject;
-			BigDecimal sourceStringDcm = EmbeddedStringUtil.str2Decimal(sourceString);
-			if (sourceStringDcm != null) {
-				result = sourceStringDcm;
+			if (EmbeddedStringUtils.isNullOrBlank(sourceString)) {
+				return null;
+			}
+			try {
+				result = new BigDecimal(sourceString.replace(",", EMPTY));
+			} catch (NumberFormatException exception) {
+				return null;
 			}
 		} else if (sourceObject instanceof DecimalWrapper) {
 			result = ((DecimalWrapper) sourceObject).value();
@@ -1868,7 +1872,7 @@ public class DecimalUtil {
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
 	public static String format(Object sourceObject, String formatPattern) {
-		if (EmbeddedStringUtil.isNullOrBlank(formatPattern)) {
+		if (EmbeddedStringUtils.isNullOrBlank(formatPattern)) {
 			return null;
 		}
 		return format(sourceObject, new DecimalFormat(formatPattern));
@@ -2154,7 +2158,7 @@ public class DecimalUtil {
 	 * @return <b>int</b> column number value.
 	 */
 	public static int columnNameToNo(String source) {
-		if (EmbeddedStringUtil.isNullOrBlank(source)) {
+		if (EmbeddedStringUtils.isNullOrBlank(source)) {
 			return 0;
 		}
 		int result = 0;
@@ -2323,7 +2327,7 @@ public class DecimalUtil {
 		}
 		@SuppressWarnings("unchecked")
 		Class<Type> typeClass = (Class<Type>) objectCollection.iterator().next().getClass();
-		Type sumObject = EmbeddedReflectiveUtil.createInstance(typeClass);
+		Type sumObject = EmbeddedReflectiveUtils.createInstance(typeClass);
 		List<Field> fieldList = new ArrayList<>();
 		Class<?> superTypeClass = typeClass;
 		Set<Class<?>> supportedClassSet = WRAPPER_VALUE_GETTER_MAP.keySet();
@@ -2348,14 +2352,14 @@ public class DecimalUtil {
 		for (Type data : objectCollection) {
 			for (Field field : fieldList) {
 				DecimalWrapper sum = sumMap.get(field.getName());
-				Object value = EmbeddedReflectiveUtil.getField(data, field.getName(), Object.class);
+				Object value = EmbeddedReflectiveUtils.getField(data, field.getName(), Object.class);
 				sum.add(value);
 			}
 		}
 		for (Field field : fieldList) {
 			DecimalWrapper sum = sumMap.get(field.getName());
 			Object value = WRAPPER_VALUE_GETTER_MAP.get(field.getType()).apply(sum);
-			EmbeddedReflectiveUtil.setField(sumObject, field.getName(), value);
+			EmbeddedReflectiveUtils.setField(sumObject, field.getName(), value);
 		}
 		return sumObject;
 	}
@@ -2452,7 +2456,7 @@ public class DecimalUtil {
 		public <ObjectType> void pushComparator(int componentTypeIndex, Class<ObjectType> objectClass, BiPredicate<ObjectType, ObjectType> comparator) {
 			if (componentTypeIndex < 0 || componentTypeIndex >= componentContainer.size()) {
 				throw new IllegalArgumentException("Component type index doesn't exist");
-			} else if (!EmbeddedReflectiveUtil.matchType(componentContainer.get(componentTypeIndex).values().iterator().next(), objectClass)) {
+			} else if (!EmbeddedReflectiveUtils.matchType(componentContainer.get(componentTypeIndex).values().iterator().next(), objectClass)) {
 				throw new IllegalArgumentException("Comparator class doesn't match component class");
 			}
 			comparatorContainer.set(componentTypeIndex, (BiPredicate<Object, Object>) nullConsideredComparator(comparator));
@@ -2584,7 +2588,7 @@ public class DecimalUtil {
 	private static final char MINUS = '-';
 	private static final char LEFT_PARENTHESIS = '(';
 	private static final char RIGHT_PARENTHESIS = ')';
-	private static final String EMPTY = EmbeddedStringUtil.EMPTY;
+	private static final String EMPTY = EmbeddedStringUtils.EMPTY;
 	private static final BigDecimal ZERO = BigDecimal.ZERO;
 	private static final BigDecimal ONE = BigDecimal.ONE;
 	private static final BigDecimal DEFAULT_VALUE = ZERO;
@@ -2804,73 +2808,24 @@ public class DecimalUtil {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// embedded utils
 
-	private static class EmbeddedStringUtil {
+	private static class EmbeddedStringUtils {
 		private static final String EMPTY = "";
-		private static final List<Character> SPACE_CHAR = Collections.unmodifiableList(Arrays.asList(' ', '　', '	'));
-		private static String FHTrim(String source) {
-			return FHLTrim(FHRTrim(source));
-		}
-		private static String FHLTrim(String source) {
-			if (source == null || source.equals(EMPTY)) {
-				return source;
-			}
-			int pos = 0;
-			for (int index = 0; index < source.length(); index ++) {
-				char c = source.charAt(index);
-				if (!SPACE_CHAR.contains(c)) {
-					break;
-				}
-				pos = index + 1;
-			}
-			if (pos > 0) {
-				return source.substring(pos);
-			}
-			return source;
-		}
-		private static String FHRTrim(String source) {
-			if (source == null || source.equals(EMPTY)) {
-				return source;
-			}
-			int pos = 0;
-			for (int index = source.length() - 1; index >= 0; index --) {
-				char c = source.charAt(index);
-				if (!SPACE_CHAR.contains(c)) {
-					break;
-				}
-				pos = index;
-			}
-			if (pos > 0) {
-				return source.substring(0, pos);
-			}
-			return source;
-		}
+		private static final String SPACE_CHARS = " 　\\t";
 
-		private static String undressNumber(String source) {
-			if (source == null) {
-				return null;
+		private static String trimSpace(String source) {
+			if (source == null || source.isEmpty()) {
+				return source;
 			}
-			return source.replace(",", EMPTY);
+			return source.replaceAll("^[" + SPACE_CHARS + "]+", EMPTY).replaceAll("[" + SPACE_CHARS + "]+$", EMPTY);
 		}
 
 		static boolean isNullOrBlank(String source) {
-			return source == null || FHTrim(source).length() == 0;
-		}
-
-		static BigDecimal str2Decimal(String source) {
-			if (isNullOrBlank(source)) {
-				return null;
-			}
-			source = undressNumber(source);
-			try {
-				return new BigDecimal(source);
-			} catch (NumberFormatException exception) {
-				return null;
-			}
+			return source == null || trimSpace(source).isEmpty();
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private static class EmbeddedReflectiveUtil {
+	private static class EmbeddedReflectiveUtils {
 		static <ReturnType> ReturnType getField(Object object, String fieldName, Class<ReturnType> returnClass) {
 			try {
 				return (ReturnType) fetchPropertyDescriptor(object.getClass(), fieldName).getReadMethod().invoke(object);
