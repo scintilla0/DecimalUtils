@@ -5,7 +5,7 @@ A utility class that provides an assortment of calculation and output methods.
 
 #### 1.3.14 (2025-03-25)
 *	Renamed to **DecimalUtils**.
-*	**EmbeddedReflectiveUtils** updated.
+*	**EmbeddedStringUtils** updated.
 
 #### 1.3.13 (2025-02-11)
 *	**collectionSum()** now can work properly on **DecimalWrapper** fields.
