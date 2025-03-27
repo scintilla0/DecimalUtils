@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.14 - 2025-03-25
+ * @version 1.3.15 - 2025-03-28
  * @author scintilla0
  */
 public class DecimalUtils {
@@ -2810,13 +2810,13 @@ public class DecimalUtils {
 
 	private static class EmbeddedStringUtils {
 		private static final String EMPTY = "";
-		private static final String SPACE_CHARS = " 　\\t";
+		private static final String SPACE_CHARS = "\\s\\u3000";
 
 		private static String trimSpace(String source) {
 			if (source == null || source.isEmpty()) {
 				return source;
 			}
-			return source.replaceAll("^[" + SPACE_CHARS + "]+", EMPTY).replaceAll("[" + SPACE_CHARS + "]+$", EMPTY);
+			return source.replaceAll("^[" + SPACE_CHARS + "]+|[" + SPACE_CHARS + "]+$", EMPTY);
 		}
 
 		static boolean isNullOrBlank(String source) {

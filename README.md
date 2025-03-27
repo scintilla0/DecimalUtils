@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.3.15 (2025-03-28)
+*	**EmbeddedStringUtils** updated.
+
 #### 1.3.14 (2025-03-25)
 *	Renamed to **DecimalUtils**.
 *	**EmbeddedStringUtils** updated.
