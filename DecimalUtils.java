@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.15 - 2025-03-28
+ * @version 1.3.16 - 2025-04-07
  * @author scintilla0
  */
 public class DecimalUtils {
@@ -705,11 +705,11 @@ public class DecimalUtils {
 			result = new BigDecimal(sourceDoubleStr);
 		} else if (sourceObject instanceof String) {
 			String sourceString = (String) sourceObject;
-			if (EmbeddedStringUtils.isNullOrBlank(sourceString)) {
+			if (EmbeddedStringUtils.isEmpty(sourceString)) {
 				return null;
 			}
 			try {
-				result = new BigDecimal(sourceString.replace(",", EMPTY));
+				result = new BigDecimal(sourceString.replace(",", BLANK));
 			} catch (NumberFormatException exception) {
 				return null;
 			}
@@ -729,7 +729,7 @@ public class DecimalUtils {
 	 */
 	public static BigDecimal wrapNull(Object sourceObject) {
 		BigDecimal result = parseDecimal(sourceObject);
-		if (areSameDecimal(ZERO, result)) {
+		if (isSameDecimal(ZERO, result)) {
 			return null;
 		}
 		return result;
@@ -1356,7 +1356,7 @@ public class DecimalUtils {
 	 * @return {@code true} if the target value is {@code null} or equals to {@link BigDecimal#ZERO}.
 	 */
 	public static boolean isNullOr0(BigDecimal sourceObject) {
-		return sourceObject == null || areSameDecimal(ZERO, sourceObject);
+		return sourceObject == null || isSameDecimal(ZERO, sourceObject);
 	}
 
 	/**
@@ -1506,7 +1506,7 @@ public class DecimalUtils {
 	 * @param comparands Target <b>Integer</b> objects to be compared.
 	 * @return {@code true} if all equal.
 	 */
-	public static boolean areSameInteger(Integer... comparands) {
+	public static boolean isSameInteger(Integer... comparands) {
 		return haveSameValue((Object[]) comparands);
 	}
 
@@ -1515,7 +1515,7 @@ public class DecimalUtils {
 	 * @param comparands Target <b>Long</b> objects to be compared.
 	 * @return {@code true} if all equal.
 	 */
-	public static boolean areSameLong(Long... comparands) {
+	public static boolean isSameLong(Long... comparands) {
 		return haveSameValue((Object[]) comparands);
 	}
 
@@ -1524,7 +1524,7 @@ public class DecimalUtils {
 	 * @param comparands Target <b>Double</b> objects to be compared.
 	 * @return {@code true} if all equal.
 	 */
-	public static boolean areSameDouble(Double... comparands) {
+	public static boolean isSameDouble(Double... comparands) {
 		return haveSameValue((Object[]) comparands);
 	}
 
@@ -1533,7 +1533,7 @@ public class DecimalUtils {
 	 * @param comparands Target <b>BigDecimal</b> objects to be compared.
 	 * @return {@code true} if all equal.
 	 */
-	public static boolean areSameDecimal(BigDecimal... comparands) {
+	public static boolean isSameDecimal(BigDecimal... comparands) {
 		return haveSameValue((Object[]) comparands);
 	}
 
@@ -1552,15 +1552,15 @@ public class DecimalUtils {
 	 * Adjacent arguments with same value are considered in proper sequence, hence no effect to the evaluating result.<br>
 	 * Any argument whose parse result is {@code null} will be ignored, hence no effect to the evaluating result.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * <pre><b><i>Eg.:</i></b>&#9;areInSequence(10, 20, "30", "40") -> true
-	 * &#9;areInSequence(10, 20, "40", "30") -> false
-	 * &#9;areInSequence(10, 20, "20", "40") -> true
-	 * &#9;areInSequence(10, 20, "A0", "40") -> true</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;isAscending(10, 20, "30", "40") -> true
+	 * &#9;isAscending(10, 20, "40", "30") -> false
+	 * &#9;isAscending(10, 20, "20", "40") -> true
+	 * &#9;isAscending(10, 20, "A0", "40") -> true</pre>
 	 * @param comparandObjects Target decimal objects to be compared.
 	 * @return {@code true} if in proper sequence.
 	 */
-	public static boolean areInSequence(Object... comparandObjects) {
-		return areInSequenceCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_PLAIN);
+	public static boolean isAscending(Object... comparandObjects) {
+		return isAscendingCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_PLAIN);
 	}
 
 	/**
@@ -1568,15 +1568,15 @@ public class DecimalUtils {
 	 * <font color="#EE2222"><b>Appearance of adjacent arguments with same value is considered to be violating the proper sequence.</b></font><br>
 	 * Any argument whose parse result is {@code null} will be ignored, hence no effect to the evaluating result.<br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * <pre><b><i>Eg.:</i></b>&#9;areInSequenceNotEqual(10, 20, "30", "40") -> true
-	 * &#9;areInSequenceNotEqual(10, 20, "40", "30") -> false
-	 * &#9;areInSequenceNotEqual(10, 20, "20", "40") -> false
-	 * &#9;areInSequenceNotEqual(10, 20, "A0", "40") -> true</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;isAscendingNotEqual(10, 20, "30", "40") -> true
+	 * &#9;isAscendingNotEqual(10, 20, "40", "30") -> false
+	 * &#9;isAscendingNotEqual(10, 20, "20", "40") -> false
+	 * &#9;isAscendingNotEqual(10, 20, "A0", "40") -> true</pre>
 	 * @param comparandObjects Target decimal objects to be compared.
 	 * @return {@code true} if in proper sequence.
 	 */
-	public static boolean areInSequenceNotEqual(Object... comparandObjects) {
-		return areInSequenceCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_EQUAL);
+	public static boolean isAscendingNotEqual(Object... comparandObjects) {
+		return isAscendingCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_EQUAL);
 	}
 
 	/**
@@ -1584,15 +1584,15 @@ public class DecimalUtils {
 	 * Adjacent arguments with same value are considered in proper sequence, hence no effect to the evaluating result.<br>
 	 * <font color="#EE2222"><b>Any argument whose parse result is {@code null} is considered to be violating the proper sequence.</b></font><br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * <pre><b><i>Eg.:</i></b>&#9;areInSequenceNotNull(10, 20, "30", "40") -> true
-	 * &#9;areInSequenceNotNull(10, 20, "40", "30") -> false
-	 * &#9;areInSequenceNotNull(10, 20, "20", "40") -> true
-	 * &#9;areInSequenceNotNull(10, 20, "A0", "40") -> false</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;isAscendingNotNull(10, 20, "30", "40") -> true
+	 * &#9;isAscendingNotNull(10, 20, "40", "30") -> false
+	 * &#9;isAscendingNotNull(10, 20, "20", "40") -> true
+	 * &#9;isAscendingNotNull(10, 20, "A0", "40") -> false</pre>
 	 * @param comparandObjects Target decimal objects to be compared.
 	 * @return {@code true} if in proper sequence.
 	 */
-	public static boolean areInSequenceNotNull(Object... comparandObjects) {
-		return areInSequenceCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_NULL);
+	public static boolean isAscendingNotNull(Object... comparandObjects) {
+		return isAscendingCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_NULL);
 	}
 
 	/**
@@ -1600,18 +1600,18 @@ public class DecimalUtils {
 	 * <font color="#EE2222"><b>Appearance of adjacent arguments with same value is considered to be violating the proper sequence.</b></font><br>
 	 * <font color="#EE2222"><b>Any argument whose parse result is {@code null} is considered to be violating the proper sequence.</b></font><br>
 	 * Uses {@link #parseDecimal(Object)} for automatic parsing.
-	 * <pre><b><i>Eg.:</i></b>&#9;areInSequenceNotEqualNull(10, 20, "30", "40") -> true
-	 * &#9;areInSequenceNotEqualNull(10, 20, "40", "30") -> false
-	 * &#9;areInSequenceNotEqualNull(10, 20, "20", "40") -> false
-	 * &#9;areInSequenceNotEqualNull(10, 20, "A0", "40") -> false</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;isAscendingNotEqualNull(10, 20, "30", "40") -> true
+	 * &#9;isAscendingNotEqualNull(10, 20, "40", "30") -> false
+	 * &#9;isAscendingNotEqualNull(10, 20, "20", "40") -> false
+	 * &#9;isAscendingNotEqualNull(10, 20, "A0", "40") -> false</pre>
 	 * @param comparandObjects Target decimal objects to be compared.
 	 * @return {@code true} if in proper sequence.
 	 */
-	public static boolean areInSequenceNotEqualNull(Object... comparandObjects) {
-		return areInSequenceCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_EQUAL_NULL);
+	public static boolean isAscendingNotEqualNull(Object... comparandObjects) {
+		return isAscendingCore(comparandObjects, SEQUENCE_INVALID_COMPARE_RESULT_NOT_EQUAL_NULL);
 	}
 
-	private static boolean areInSequenceCore(Object[] comparandObjects, List<Integer> sequenceInvalidCompareResult) {
+	private static boolean isAscendingCore(Object[] comparandObjects, List<Integer> sequenceInvalidCompareResult) {
 		Object previousValidComparand = comparandObjects.length != 0 ? comparandObjects[0] : null;
 		for (int index = 1; index < comparandObjects.length; index ++) {
 			Object thisComparand = comparandObjects[index];
@@ -1803,7 +1803,7 @@ public class DecimalUtils {
 	public static String stringify(Object sourceObject) {
 		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
-			return EMPTY;
+			return BLANK;
 		}
 		return decimal.stripTrailingZeros().toPlainString();
 	}
@@ -1872,7 +1872,7 @@ public class DecimalUtils {
 	 * @return Wrapped and formatted <b>String</b> char sequence.
 	 */
 	public static String format(Object sourceObject, String formatPattern) {
-		if (EmbeddedStringUtils.isNullOrBlank(formatPattern)) {
+		if (EmbeddedStringUtils.isEmpty(formatPattern)) {
 			return null;
 		}
 		return format(sourceObject, new DecimalFormat(formatPattern));
@@ -1901,7 +1901,7 @@ public class DecimalUtils {
 	public static String format(Object sourceObject, DecimalFormat format) {
 		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
-			return EMPTY;
+			return BLANK;
 		}
 		return format.format(decimal);
 	}
@@ -1934,7 +1934,7 @@ public class DecimalUtils {
 	public static String percent(Object sourceObject, Integer decimalPlace) {
 		BigDecimal decimal = parseDecimal(sourceObject);
 		if (decimal == null) {
-			return EMPTY;
+			return BLANK;
 		}
 		int exactDecimalPlace = wrap0(decimalPlace).abs().intValue();
 		decimal = decimal.multiply(PERCENT_MULTIPLICATOR).setScale(exactDecimalPlace, DEFAULT_ROUNDING_MODE);
@@ -1946,7 +1946,7 @@ public class DecimalUtils {
 			}
 			format.append("0");
 		}
-		return new DecimalFormat(format.toString()).format(decimal) + (hasSpace ? " " : EMPTY) + "%";
+		return new DecimalFormat(format.toString()).format(decimal) + (hasSpace ? " " : BLANK) + "%";
 	}
 
 	/**
@@ -2089,7 +2089,7 @@ public class DecimalUtils {
 	 */
 	public static BigDecimal getFractionalPart(Object sourceObject) {
 		BigDecimal result = wrap0(parseDecimal(sourceObject)).subtract(getIntegralPart(sourceObject)).stripTrailingZeros();
-		if (areSameDecimal(ZERO, result)) {
+		if (isSameDecimal(ZERO, result)) {
 			result = result.setScale(1, HALF_UP);
 		}
 		return result;
@@ -2116,7 +2116,7 @@ public class DecimalUtils {
 	 */
 	public static int getFractionalLength(Object sourceObject) {
 		BigDecimal fractionalPartAbsoluteValue = getFractionalPart(sourceObject).abs().stripTrailingZeros();
-		if (areSameDecimal(ZERO, fractionalPartAbsoluteValue)) {
+		if (isSameDecimal(ZERO, fractionalPartAbsoluteValue)) {
 			return 0;
 		}
 		return fractionalPartAbsoluteValue.toPlainString().length() - 2;
@@ -2158,7 +2158,7 @@ public class DecimalUtils {
 	 * @return <b>int</b> column number value.
 	 */
 	public static int columnNameToNo(String source) {
-		if (EmbeddedStringUtils.isNullOrBlank(source)) {
+		if (EmbeddedStringUtils.isEmpty(source)) {
 			return 0;
 		}
 		int result = 0;
@@ -2232,7 +2232,7 @@ public class DecimalUtils {
 	 * @return Parsed <b>BigDecimal</b> calculation result.
 	 */
 	public static BigDecimal blendEvaluate(String source) {
-		source = source.replaceAll("\\s+", EMPTY);
+		source = source.replaceAll("\\s+", BLANK);
 		int parenthesisCount = 0;
 		for (int index = 0; index < source.length(); index ++) {
 			if (source.charAt(index) == LEFT_PARENTHESIS) {
@@ -2588,7 +2588,7 @@ public class DecimalUtils {
 	private static final char MINUS = '-';
 	private static final char LEFT_PARENTHESIS = '(';
 	private static final char RIGHT_PARENTHESIS = ')';
-	private static final String EMPTY = EmbeddedStringUtils.EMPTY;
+	private static final String BLANK = EmbeddedStringUtils.BLANK;
 	private static final BigDecimal ZERO = BigDecimal.ZERO;
 	private static final BigDecimal ONE = BigDecimal.ONE;
 	private static final BigDecimal DEFAULT_VALUE = ZERO;
@@ -2694,7 +2694,7 @@ public class DecimalUtils {
 		if (!(amount == null || unitPrice == null || taxRate == null)) {
 			int scale = (returnClass == Double.class || returnClass == double.class) ? DEFAULT_DECIMAL_SCALE : DEFAULT_SCALE;
 			BigDecimal medium = setScale(product(amount, unitPrice), scale, roundingMode);
-			if (areSameDecimal(ZERO, taxRate)) {
+			if (isSameDecimal(ZERO, taxRate)) {
 				result = new BigDecimal[] {medium, medium, ZERO, medium};
 			} else if (OUT_TAX == inOutTaxFlg) {
 				BigDecimal outTax = quotient(product(medium, taxRate), PERCENT_ADDEND, scale, roundingMode);
@@ -2733,7 +2733,7 @@ public class DecimalUtils {
 		BigDecimal payAmount = parseDecimal(payAmountObject), taxRate = parseDecimal(taxRateObject);
 		BigDecimal[] result = null;
 		if (!(payAmount == null || taxRate == null)) {
-			if (areSameDecimal(ZERO, taxRate)) {
+			if (isSameDecimal(ZERO, taxRate)) {
 				result = new BigDecimal[] {ZERO, payAmount, ZERO, payAmount};
 			} else {
 				BigDecimal outTax = quotient(product(payAmount, taxRate), PERCENT_ADDEND, roundingScale, roundingMode);
@@ -2768,7 +2768,7 @@ public class DecimalUtils {
 		BigDecimal allAmount = parseDecimal(allAmountObject), taxRate = parseDecimal(taxRateObject);
 		BigDecimal[] result = null;
 		if (!(allAmount == null || taxRate == null)) {
-			if (areSameDecimal(ZERO, taxRate)) {
+			if (isSameDecimal(ZERO, taxRate)) {
 				result = new BigDecimal[] {ZERO, allAmount, ZERO, allAmount};
 			} else {
 				BigDecimal outTax = quotient(product(allAmount, taxRate), sum(PERCENT_ADDEND, taxRate), roundingScale, roundingMode);
@@ -2781,7 +2781,7 @@ public class DecimalUtils {
 
 	private static RoundingMode getRoundingModeFromFractionKbn(Object fractionKbnObject) {
 		Integer fractionKbn = toInteger(fractionKbnObject);
-		return areSameInteger(TAX_FLOOR, fractionKbn) ? FLOOR : areSameInteger(TAX_CEIL, fractionKbn) ? CEILING : HALF_UP;
+		return isSameInteger(TAX_FLOOR, fractionKbn) ? FLOOR : isSameInteger(TAX_CEIL, fractionKbn) ? CEILING : HALF_UP;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -2809,17 +2809,17 @@ public class DecimalUtils {
 	// embedded utils
 
 	private static class EmbeddedStringUtils {
-		private static final String EMPTY = "";
+		private static final String BLANK = "";
 		private static final String SPACE_CHARS = "\\s\\u3000";
 
 		private static String trimSpace(String source) {
 			if (source == null || source.isEmpty()) {
 				return source;
 			}
-			return source.replaceAll("^[" + SPACE_CHARS + "]+|[" + SPACE_CHARS + "]+$", EMPTY);
+			return source.replaceAll("^[" + SPACE_CHARS + "]+|[" + SPACE_CHARS + "]+$", BLANK);
 		}
 
-		static boolean isNullOrBlank(String source) {
+		static boolean isEmpty(String source) {
 			return source == null || trimSpace(source).isEmpty();
 		}
 	}
