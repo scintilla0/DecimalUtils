@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.16 - 2025-04-07
+ * @version 1.3.17 - 2025-04-15
  * @author scintilla0
  */
 public class DecimalUtils {
@@ -1667,7 +1667,7 @@ public class DecimalUtils {
 	/**
 	 * Provides an ascending <b>Comparator&lt;Type&gt;</b> available in methods such as {@link List#sort(Comparator)}.<br>
 	 * Uses {@link #compare(Object, Object)} as base method.
-	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtil.compareAsc(User::getUserId))</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtils.compareAsc(User::getUserId))</pre>
 	 * @param <Type> The type of object to be compared.
 	 * @param fieldGetter The getter of the field to be used for comparing.
 	 * @return <b>Comparator&lt;Type&gt;</b><br>
@@ -1679,7 +1679,7 @@ public class DecimalUtils {
 	/**
 	 * Provides a descending <b>Comparator&lt;Type&gt;</b> available in methods such as {@link List#sort(Comparator)}.<br>
 	 * Uses {@link #compare(Object, Object)} as base method.
-	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtil.compareDesc(User::getUserId))</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtils.compareDesc(User::getUserId))</pre>
 	 * @param <Type> The type of object to be compared.
 	 * @param fieldGetter The getter of the field to be used for comparing.
 	 * @return <b>Comparator&lt;Type&gt;</b><br>
@@ -1691,7 +1691,7 @@ public class DecimalUtils {
 	/**
 	 * Provides an ascending <b>Comparator&lt;Type&gt;</b> available in methods such as {@link List#sort(Comparator)}.<br>
 	 * Uses {@link #compareW0(Object, Object)} as base method.
-	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtil.compareW0Asc(User::getUserId))</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtils.compareW0Asc(User::getUserId))</pre>
 	 * @param <Type> The type of object to be compared.
 	 * @param fieldGetter The getter of the field to be used for comparing.
 	 * @return <b>Comparator&lt;Type&gt;</b><br>
@@ -1703,7 +1703,7 @@ public class DecimalUtils {
 	/**
 	 * Provides a descending <b>Comparator&lt;Type&gt;</b> available in methods such as {@link List#sort(Comparator)}.<br>
 	 * Uses {@link #compareW0(Object, Object)} as base method.
-	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtil.compareW0Desc(User::getUserId))</pre>
+	 * <pre><b><i>Eg.:</i></b>&#9;objectList.sort(DecimalUtils.compareW0Desc(User::getUserId))</pre>
 	 * @param <Type> The type of object to be compared.
 	 * @param fieldGetter The getter of the field to be used for comparing.
 	 * @return <b>Comparator&lt;Type&gt;</b><br>

@@ -4,6 +4,9 @@ A utility class that provides an assortment of calculation and output methods.
 ### Change log
 
 #### 1.3.16 (2025-04-07)
+*	Javadoc rectified.
+
+#### 1.3.16 (2025-04-07)
 *	Method names normalized: ~~**areInSequence()**~~ -> **isAscending()**, ~~**are...()**~~ -> **is...()**.
 
 #### 1.3.15 (2025-03-28)
