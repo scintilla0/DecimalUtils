@@ -43,638 +43,10 @@ import java.util.stream.IntStream;
  * will result in concluding {@code null} to be the final result.<br>
  * All static methods with <b><u>W0</u></b>, i.e. wrap0, will automatically treat their arguments or final result
  * as {@link BigDecimal#ZERO} if they are {@code null}.
- * @version 1.3.17 - 2025-04-15
+ * @version 1.4.0 - 2025-06-13
  * @author scintilla0
  */
 public class DecimalUtils {
-
-	/**
-	 * A wrapper class of <b>BigDecimal</b>.<br>
-	 * Reserves decimal value, scale and rounding mode for calculation.<br>
-	 * All calculation methods automatically ignore {@code null}.<br>
-	 * All calculation methods return the instance itself, allowing for method chaining.<br>
-	 * Has log recording function that you can look into during debugging.
-	 */
-	public static class DecimalWrapper {
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance basic
-
-		private BigDecimal value;
-		private int scale;
-		private RoundingMode roundingMode;
-		private String roundingModeName;
-
-		private final StringBuilder log = new StringBuilder();
-
-		/**
-		 * Creates a new instance for proceeding instance calculation.<br>
-		 * With default scale of {@value #DEFAULT_SCALE}.<br>
-		 * With default rounding mode of {@link RoundingMode#HALF_UP}.
-		 */
-		public DecimalWrapper() {
-			this(DEFAULT_SCALE, DEFAULT_ROUNDING_MODE);
-		}
-
-		/**
-		 * Creates a new instance for proceeding instance calculation.
-		 * @param scale Number of decimal places to be reserved for later calculation.
-		 * @param roundingMode Rounding mode to be reserved for later calculation, using int value preset in <b>BigDecimal</b>.
-		 */
-		public DecimalWrapper(int scale, int roundingMode) {
-			this(scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Creates a new instance for proceeding instance calculation.
-		 * @param scale Number of decimal places to be reserved for later calculation.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved for later calculation.
-		 */
-		public DecimalWrapper(int scale, RoundingMode roundingMode) {
-			this.value = DEFAULT_VALUE;
-			this.scale = scale;
-			this.roundingMode = roundingMode;
-			this.roundingModeName = ROUNDING_MODE_NAME.get(roundingMode);
-			_log("initialized");
-			_log("set value to default: " + DEFAULT_VALUE);
-			_log(scale, roundingMode);
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance batch operation
-
-		/**
-		 * Efficiently creates an array of <b>DecimalWrapper</b> objects with the specified size.
-		 * @param arraySize Desired size of the resulting array.
-		 * @return An array of <b>DecimalWrapper</b>.
-		 */
-		public static DecimalWrapper[] createArray(int arraySize) {
-			DecimalWrapper[] resultArray = new DecimalWrapper[arraySize];
-			for (int index = 0; index < arraySize; index ++) {
-				resultArray[index] = new DecimalWrapper();
-			}
-			return resultArray;
-		}
-
-		/**
-		 * Efficiently creates a <b>Map</b> of <b>DecimalWrapper</b> objects with the specified keys.
-		 * @param keys Desired keys of the entries in resulting map.
-		 * @return A <b>DecimalWrapper</b> <b>Map</b>.
-		 */
-		public static Map<String, DecimalWrapper> createMap(String... keys) {
-			Map<String, DecimalWrapper> resultMap = new HashMap<>();
-			for (String key : keys) {
-				resultMap.put(key, new DecimalWrapper());
-			}
-			return resultMap;
-		}
-
-		/**
-		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target array.
-		 * @param targetArray Target array of <b>DecimalWrapper</b> to be cleared.
-		 */
-		public static void clearArray(DecimalWrapper[] targetArray) {
-			for (DecimalWrapper wrapper : targetArray) {
-				wrapper.clear();
-			}
-		}
-
-		/**
-		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target map.
-		 * @param targetMap Target <b>DecimalWrapper</b> <b>Map</b> to be cleared.
-		 */
-		public static void clearMap(Map<String, DecimalWrapper> targetMap) {
-			for (DecimalWrapper wrapper : targetMap.values()) {
-				wrapper.clear();
-			}
-		}
-
-		/**
-		 * Transfers the <b>DecimalWrapper</b> value from one to another element of the same array.
-		 * @param array Target array of <b>DecimalWrapper</b>.
-		 * @param targetIndex Index of the <b>DecimalWrapper</b> to transfer from.
-		 * @param destinationIndex Index of the <b>DecimalWrapper</b> to transfer to.
-		 */
-		public static void transferValue(DecimalWrapper[] array, int targetIndex, int destinationIndex) {
-			array[destinationIndex].add(array[targetIndex]);
-			array[targetIndex].clear();
-		}
-
-		/**
-		 * Transfers the <b>DecimalWrapper</b> value from one to another entry of the same <b>Map</b>.
-		 * @param map Target <b>Map</b> with <b>DecimalWrapper</b> as its parameterized value type.
-		 * @param targetKey Key of the <b>DecimalWrapper</b>'s entry to transfer from.
-		 * @param destinationKey Key of the <b>DecimalWrapper</b>'s entry to transfer to.
-		 */
-		public static void transferValue(Map<String, DecimalWrapper> map, String targetKey, String destinationKey) {
-			map.get(destinationKey).add(map.get(targetKey));
-			map.get(targetKey).clear();
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance calculation
-
-		/**
-		 * Resets reserved values to default settings, and deletes all logs.
-		 */
-		public DecimalWrapper clear() {
-			this.value = DEFAULT_VALUE;
-			this.log.delete(0, this.log.length());
-			_log("(re)set value to default: " + DEFAULT_VALUE);
-			return this;
-		}
-
-		/**
-		 * Reverses the sign of the reserved value to its opposite.
-		 * @see DecimalUtils#minus(Object)
-		 */
-		public DecimalWrapper negate() {
-			this.value = minus(this.value);
-			_log("negate", new Object[] {});
-			return this;
-		}
-
-		/**
-		 * Makes the reserved value positive.
-		 * @see DecimalUtils#absolute(Object)
-		 */
-		public DecimalWrapper absolute() {
-			this.value = DecimalUtils.absolute(this.value);
-			_log("absolute", new Object[] {});
-			return this;
-		}
-
-		/**
-		 * Adds all the target decimals to the reserved value.
-		 * @param addendObjects Target decimal objects to be added.
-		 * @see DecimalUtils#sum(Object...)
-		 */
-		public DecimalWrapper add(Object... addendObjects) {
-			this.value = sum(this.value, sumReserveNull(addendObjects));
-			_log("add", addendObjects);
-			return this;
-		}
-
-		/**
-		 * Subtracts all the target decimals from the reserved value.
-		 * @param subtrahendObjects Target decimal objects to be subtracted.
-		 * @see DecimalUtils#sum(Object...)
-		 * @see DecimalUtils#minus(Object)
-		 */
-		public DecimalWrapper subtract(Object... subtrahendObjects) {
-			this.value = sum(this.value, minus(sumReserveNull(subtrahendObjects)));
-			_log("subtract", subtrahendObjects);
-			return this;
-		}
-
-		/**
-		 * Multiplies all the target decimals to the reserved value.
-		 * @param multiplierObjects Target decimal objects to be multiplied.
-		 * @see DecimalUtils#product(Object...)
-		 */
-		public DecimalWrapper multiply(Object... multiplierObjects) {
-			this.value = product(this.value, productReserveNull(multiplierObjects));
-			_log("multiply", multiplierObjects);
-			return this;
-		}
-
-		/**
-		 * Multiplies all the target decimals to the reserved value, and divides by {@code 100} as one of them is a percentage.
-		 * @param multiplierObjects Target decimal objects to be multiplied.
-		 * @see DecimalUtils#productDepercent(Object...)
-		 */
-		public DecimalWrapper multiplyDepercent(Object... multiplierObjects) {
-			this.value = productDepercent(this.value, productReserveNull(multiplierObjects));
-			_log("multiply into depercent", multiplierObjects);
-			return this;
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal.<br>
-		 * Uses reserved scale and rounding mode.
-		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divide(Object divisorObject) {
-			this.value = quotient(this.value, divisorObject, this.scale, this.roundingMode);
-			_log("divide", divisorObject);
-			return this;
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param divisorObject Divisor decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divide(Object divisorObject, int scale, int roundingMode) {
-			return divide(divisorObject, scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param divisorObject Divisor decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divide(Object divisorObject, int scale, RoundingMode roundingMode) {
-			setScaleCore(scale, roundingMode);
-			_log(scale, roundingMode);
-			return this.divide(divisorObject);
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Uses reserved scale and rounding mode.
-		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper dividePercent(Object divisorObject) {
-			this.value = quotientPercent(this.value, divisorObject, this.scale, this.roundingMode);
-			_log("divide into percent", divisorObject);
-			return this;
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param divisorObject Divisor decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper dividePercent(Object divisorObject, int scale, int roundingMode) {
-			return dividePercent(divisorObject, scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param divisorObject Divisor decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper dividePercent(Object divisorObject, int scale, RoundingMode roundingMode) {
-			setScaleCore(scale, roundingMode);
-			_log(scale, roundingMode);
-			return this.dividePercent(divisorObject);
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value.<br>
-		 * Uses reserved scale and rounding mode.
-		 * @param dividendObject Dividend decimal object.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisor(Object dividendObject) {
-			this.value = quotient(dividendObject, this.value, this.scale, this.roundingMode);
-			_log("divide as divisor", dividendObject);
-			return this;
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param dividendObject Dividend decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, int roundingMode) {
-			return divideAsDivisor(dividendObject, scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param dividendObject Dividend decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, RoundingMode roundingMode) {
-			setScaleCore(scale, roundingMode);
-			_log(scale, roundingMode);
-			return divideAsDivisor(dividendObject);
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Uses reserved scale and rounding mode.
-		 * @param dividendObject Dividend decimal object.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisorPercent(Object dividendObject) {
-			this.value = quotientPercent(dividendObject, this.value, this.scale, this.roundingMode);
-			_log("divide as divisor into percent", dividendObject);
-			return this;
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param dividendObject Dividend decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, int roundingMode) {
-			return divideAsDivisorPercent(dividendObject, scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
-		 * Accepts the new scale and rounding mode for current and later calculation.
-		 * @param dividendObject Dividend decimal object.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
-		 */
-		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, RoundingMode roundingMode) {
-			setScaleCore(scale, roundingMode);
-			_log(scale, roundingMode);
-			return divideAsDivisorPercent(dividendObject);
-		}
-
-		/**
-		 * Divides the reserved value by the target decimal to reserve the remainder.
-		 * @param divisorObject Divisor decimal object.
-		 * @see DecimalUtils#mod(Object, Object)
-		 */
-		public DecimalWrapper mod(Object divisorObject) {
-			this.value = DecimalUtils.mod(this.value, divisorObject);
-			_log("mod", divisorObject);
-			return this;
-		}
-
-		/**
-		 * Divides the target decimal by the reserved value to reserve the remainder.
-		 * @param dividendObject Divisor decimal object.
-		 * @see DecimalUtils#mod(Object, Object)
-		 */
-		public DecimalWrapper modAsDivisor(Object dividendObject) {
-			this.value = DecimalUtils.mod(dividendObject, this.value);
-			_log("mod", dividendObject);
-			return this;
-		}
-
-		/**
-		 * Accepts new scale for later calculation.
-		 * @param scale Number of decimal places to be reserved.
-		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
-		 */
-		public DecimalWrapper setScale(int scale) {
-			setScaleCore(scale, this.roundingMode);
-			this.value = DecimalUtils.setScale(this.value, scale, this.roundingMode);
-			_log(scale, this.roundingMode);
-			return this;
-		}
-
-		/**
-		 * Accepts the new scale and rounding mode for later calculation.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
-		 * @see DecimalUtils#setScale(Object, int)
-		 */
-		public DecimalWrapper setScale(int scale, int roundingMode) {
-			return setScale(scale, valueOf(roundingMode));
-		}
-
-		/**
-		 * Accepts the new scale and rounding mode for later calculation.
-		 * @param scale Number of decimal places to be reserved.
-		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
-		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
-		 */
-		public DecimalWrapper setScale(int scale, RoundingMode roundingMode) {
-			setScaleCore(scale, roundingMode);
-			this.value = DecimalUtils.setScale(this.value, scale, roundingMode);
-			_log(scale, roundingMode);
-			return this;
-		}
-
-		private void setScaleCore(int scale, RoundingMode roundingMode) {
-			this.scale = scale;
-			this.roundingMode = roundingMode;
-			this.roundingModeName = ROUNDING_MODE_NAME.get(roundingMode);
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance comparing
-
-		/**
-		 * Evaluates if the reserved value is equal to the target decimal.
-		 * @param comparandObject Target decimal object to be compared.
-		 * @return {@code true} if equal.
-		 * @see DecimalUtils#compare(Object, Object)
-		 */
-		public boolean isEquivalentTo(Object comparandObject) {
-			return compareW0(this.value, comparandObject) == 0;
-		}
-
-		/**
-		 * Evaluates if the reserved value is greater than the target decimal.
-		 * @param comparandObject Target decimal object to be compared.
-		 * @return {@code true} if greater than.
-		 * @see DecimalUtils#compare(Object, Object)
-		 */
-		public boolean isGreaterThan(Object comparandObject) {
-			return compareW0(this.value, comparandObject) == 1;
-		}
-
-		/**
-		 * Evaluates if the reserved value is greater than or equal to the target decimal.
-		 * @param comparandObject Target decimal object to be compared.
-		 * @return {@code true} if not less than.
-		 * @see DecimalUtils#compare(Object, Object)
-		 */
-		public boolean isGreaterEqual(Object comparandObject) {
-			int compareResult = compareW0(this.value, comparandObject);
-			return compareResult == 0 || compareResult == 1;
-		}
-
-		/**
-		 * Evaluates if the reserved value is less than the target decimal.
-		 * @param comparandObject Target decimal object to be compared.
-		 * @return {@code true} if less than.
-		 * @see DecimalUtils#compare(Object, Object)
-		 */
-		public boolean isLessThan(Object comparandObject) {
-			return compareW0(this.value, comparandObject) == -1;
-		}
-
-		/**
-		 * Evaluates if the reserved value is less than or equal to the target decimal.
-		 * @param comparandObject Target decimal object to be compared.
-		 * @return {@code true} if not greater than.
-		 * @see DecimalUtils#compare(Object, Object)
-		 */
-		public boolean isLessEqual(Object comparandObject) {
-			int compareResult = compareW0(this.value, comparandObject);
-			return compareResult == 0 || compareResult == -1;
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance output
-
-		/**
-		 * Gets the reserved value.
-		 * @return <b>BigDecimal</b> value.
-		 */
-		public BigDecimal value() {
-			return this.value;
-		}
-
-		/**
-		 * Extracts the integral part of the reserved value.
-		 * @return <b>BigDecimal</b> value.
-		 * @see DecimalUtils#getIntegralPart(Object)
-		 */
-		public BigDecimal integralPart() {
-			return getIntegralPart(this.value);
-		}
-
-		/**
-		 * Extracts the fractional part of the reserved value.
-		 * @return <b>BigDecimal</b> value.
-		 * @see DecimalUtils#getFractionalPart(Object)
-		 */
-		public BigDecimal fractionalPart() {
-			return getFractionalPart(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into an <b>Integer</b> object.
-		 * @return Wrapped <b>Integer</b> value.
-		 * @see DecimalUtils#toInteger(Object)
-		 */
-		public Integer integerValue() {
-			return toInteger(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into a <b>Long</b> object.
-		 * @return Wrapped <b>Long</b> value.
-		 * @see DecimalUtils#toLong(Object)
-		 */
-		public Long longValue() {
-			return toLong(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into a <b>Double</b> object.
-		 * @return Wrapped <b>Double</b> value.
-		 * @see DecimalUtils#toDouble(Object)
-		 */
-		public Double doubleValue() {
-			return toDouble(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into a plain <b>String</b> char sequence without any extra operation.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#stringify(Object)
-		 */
-		public String stringify() {
-			return DecimalUtils.stringify(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#dress(Object)
-		 */
-		public String dress() {
-			return DecimalUtils.dress(this.value);
-		}
-
-		/**
-		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators and 2 decimal places.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#dress2DP(Object)
-		 */
-		public String dress2DP() {
-			return DecimalUtils.dress2DP(this.value);
-		}
-
-		/**
-		 * Formats the reserved value into a <b>String</b> char sequence with the specified format.<br>
-		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
-		 * @param formatPattern Target number format presented by a <b>String</b> char sequence.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#format(Object, String)
-		 */
-		public String format(String formatPattern) {
-			return DecimalUtils.format(this.value, formatPattern);
-		}
-
-		/**
-		 * Formats the reserved value into a <b>String</b> char sequence with the specified format.<br>
-		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
-		 * @param format Target number format presented by a {@link DecimalFormat} object.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#format(Object, String)
-		 */
-		public String format(DecimalFormat format) {
-			return DecimalUtils.format(this.value, format);
-		}
-
-		/**
-		 * Formats the reserved value into a <b>String</b> char sequence with pecentage format.<br>
-		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
-		 * @param decimalPlace Number of decimal places to be retained.
-		 * @return Wrapped and formatted <b>String</b> char sequence.
-		 * @see DecimalUtils#percent(Object, Integer)
-		 */
-		public String percent(Integer decimalPlace) {
-			return DecimalUtils.percent(this.value, decimalPlace);
-		}
-
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// instance log
-
-		private void _log(String command) {
-			this.log.append(command);
-			this.log.append("\n");
-		}
-
-		private void _log(String command, Object... params) {
-			boolean isMultipleParams = params.length > 1;
-			this.log.append(command).append(" ").append(isMultipleParams ? "(" : "");
-			for (int index = 0; index < params.length; index ++) {
-				BigDecimal param = parseDecimal(params[index]);
-				this.log.append(param != null ? param.toPlainString() : "null");
-				if (index < params.length - 1) {
-					this.log.append(", ");
-				}
-			}
-			this.log.append(isMultipleParams ? ")" : "");
-			if (command.contains("divide")) {
-				this.log.append(" (").append(this.scale).append(", ").append(this.roundingModeName).append(")");
-			}
-			this.log.append(", current value: ").append(this.value.toPlainString());
-			this.log.append("\n");
-		}
-
-		private void _log(int scale, RoundingMode roundingMode) {
-			this.log.append("set scale: ").append(scale).append(", roundingMode: ").append(ROUNDING_MODE_NAME.get(roundingMode));
-			this.log.append("\n");
-		}
-
-		/**
-		 * Output logs.
-		 * @return <b>String</b> logs.
-		 */
-		public String getLog() {
-			return this.log.toString();
-		}
-
-	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// static decimal getter
@@ -2365,12 +1737,788 @@ public class DecimalUtils {
 	}
 
 	/**
+	 * A wrapper class of <b>BigDecimal</b>.<br>
+	 * Reserves decimal value, scale and rounding mode for calculation.<br>
+	 * All calculation methods automatically ignore {@code null}.<br>
+	 * All calculation methods return the instance itself, allowing for method chaining.<br>
+	 * Has log recording function that you can look into during debugging.
+	 */
+	public static class DecimalWrapper {
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance basic
+
+		private BigDecimal value;
+		private int scale;
+		private RoundingMode roundingMode;
+		private String roundingModeName;
+
+		private final StringBuilder log = new StringBuilder();
+
+		/**
+		 * Creates a new instance for proceeding instance calculation.<br>
+		 * With default scale of {@value #DEFAULT_SCALE}.<br>
+		 * With default rounding mode of {@link RoundingMode#HALF_UP}.
+		 */
+		public DecimalWrapper() {
+			this(DEFAULT_SCALE, DEFAULT_ROUNDING_MODE);
+		}
+
+		/**
+		 * Creates a new instance for proceeding instance calculation.
+		 * @param scale Number of decimal places to be reserved for later calculation.
+		 * @param roundingMode Rounding mode to be reserved for later calculation, using int value preset in <b>BigDecimal</b>.
+		 */
+		public DecimalWrapper(int scale, int roundingMode) {
+			this(scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Creates a new instance for proceeding instance calculation.
+		 * @param scale Number of decimal places to be reserved for later calculation.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved for later calculation.
+		 */
+		public DecimalWrapper(int scale, RoundingMode roundingMode) {
+			this.value = DEFAULT_VALUE;
+			this.scale = scale;
+			this.roundingMode = roundingMode;
+			this.roundingModeName = ROUNDING_MODE_NAME.get(roundingMode);
+			_log("initialized");
+			_log("set value to default: " + DEFAULT_VALUE);
+			_log(scale, roundingMode);
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance batch operation
+
+		/**
+		 * Efficiently creates an array of <b>DecimalWrapper</b> objects with the specified size.
+		 * @param arraySize Desired size of the resulting array.
+		 * @return An array of <b>DecimalWrapper</b>.
+		 */
+		public static DecimalWrapper[] createArray(int arraySize) {
+			DecimalWrapper[] resultArray = new DecimalWrapper[arraySize];
+			for (int index = 0; index < arraySize; index ++) {
+				resultArray[index] = new DecimalWrapper();
+			}
+			return resultArray;
+		}
+
+		/**
+		 * Efficiently creates a <b>Map</b> of <b>DecimalWrapper</b> objects with the specified keys.
+		 * @param keys Desired keys of the entries in resulting map.
+		 * @return A <b>DecimalWrapper</b> <b>Map</b>.
+		 */
+		public static Map<String, DecimalWrapper> createMap(String... keys) {
+			Map<String, DecimalWrapper> resultMap = new HashMap<>();
+			for (String key : keys) {
+				resultMap.put(key, new DecimalWrapper());
+			}
+			return resultMap;
+		}
+
+		/**
+		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target array.
+		 * @param targetArray Target array of <b>DecimalWrapper</b> to be cleared.
+		 */
+		public static void clearArray(DecimalWrapper[] targetArray) {
+			for (DecimalWrapper wrapper : targetArray) {
+				wrapper.clear();
+			}
+		}
+
+		/**
+		 * Efficiently resets all <b>DecimalWrapper</b> values and logs in the target map.
+		 * @param targetMap Target <b>DecimalWrapper</b> <b>Map</b> to be cleared.
+		 */
+		public static void clearMap(Map<String, DecimalWrapper> targetMap) {
+			for (DecimalWrapper wrapper : targetMap.values()) {
+				wrapper.clear();
+			}
+		}
+
+		/**
+		 * Transfers the <b>DecimalWrapper</b> value from one to another element of the same array.
+		 * @param array Target array of <b>DecimalWrapper</b>.
+		 * @param targetIndex Index of the <b>DecimalWrapper</b> to transfer from.
+		 * @param destinationIndex Index of the <b>DecimalWrapper</b> to transfer to.
+		 */
+		public static void transferValue(DecimalWrapper[] array, int targetIndex, int destinationIndex) {
+			array[destinationIndex].add(array[targetIndex]);
+			array[targetIndex].clear();
+		}
+
+		/**
+		 * Transfers the <b>DecimalWrapper</b> value from one to another entry of the same <b>Map</b>.
+		 * @param map Target <b>Map</b> with <b>DecimalWrapper</b> as its parameterized value type.
+		 * @param targetKey Key of the <b>DecimalWrapper</b>'s entry to transfer from.
+		 * @param destinationKey Key of the <b>DecimalWrapper</b>'s entry to transfer to.
+		 */
+		public static void transferValue(Map<String, DecimalWrapper> map, String targetKey, String destinationKey) {
+			map.get(destinationKey).add(map.get(targetKey));
+			map.get(targetKey).clear();
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance calculation
+
+		/**
+		 * Resets reserved values to default settings, and deletes all logs.
+		 */
+		public DecimalWrapper clear() {
+			this.value = DEFAULT_VALUE;
+			this.log.delete(0, this.log.length());
+			_log("(re)set value to default: " + DEFAULT_VALUE);
+			return this;
+		}
+
+		/**
+		 * Reverses the sign of the reserved value to its opposite.
+		 * @see DecimalUtils#minus(Object)
+		 */
+		public DecimalWrapper negate() {
+			this.value = minus(this.value);
+			_log("negate", new Object[] {});
+			return this;
+		}
+
+		/**
+		 * Makes the reserved value positive.
+		 * @see DecimalUtils#absolute(Object)
+		 */
+		public DecimalWrapper absolute() {
+			this.value = DecimalUtils.absolute(this.value);
+			_log("absolute", new Object[] {});
+			return this;
+		}
+
+		/**
+		 * Adds all the target decimals to the reserved value.
+		 * @param addendObjects Target decimal objects to be added.
+		 * @see DecimalUtils#sum(Object...)
+		 */
+		public DecimalWrapper add(Object... addendObjects) {
+			this.value = sum(this.value, sumReserveNull(addendObjects));
+			_log("add", addendObjects);
+			return this;
+		}
+
+		/**
+		 * Subtracts all the target decimals from the reserved value.
+		 * @param subtrahendObjects Target decimal objects to be subtracted.
+		 * @see DecimalUtils#sum(Object...)
+		 * @see DecimalUtils#minus(Object)
+		 */
+		public DecimalWrapper subtract(Object... subtrahendObjects) {
+			this.value = sum(this.value, minus(sumReserveNull(subtrahendObjects)));
+			_log("subtract", subtrahendObjects);
+			return this;
+		}
+
+		/**
+		 * Multiplies all the target decimals to the reserved value.
+		 * @param multiplierObjects Target decimal objects to be multiplied.
+		 * @see DecimalUtils#product(Object...)
+		 */
+		public DecimalWrapper multiply(Object... multiplierObjects) {
+			this.value = product(this.value, productReserveNull(multiplierObjects));
+			_log("multiply", multiplierObjects);
+			return this;
+		}
+
+		/**
+		 * Multiplies all the target decimals to the reserved value, and divides by {@code 100} as one of them is a percentage.
+		 * @param multiplierObjects Target decimal objects to be multiplied.
+		 * @see DecimalUtils#productDepercent(Object...)
+		 */
+		public DecimalWrapper multiplyDepercent(Object... multiplierObjects) {
+			this.value = productDepercent(this.value, productReserveNull(multiplierObjects));
+			_log("multiply into depercent", multiplierObjects);
+			return this;
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal.<br>
+		 * Uses reserved scale and rounding mode.
+		 * @param divisorObject Divisor decimal object.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divide(Object divisorObject) {
+			this.value = quotient(this.value, divisorObject, this.scale, this.roundingMode);
+			_log("divide", divisorObject);
+			return this;
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param divisorObject Divisor decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divide(Object divisorObject, int scale, int roundingMode) {
+			return divide(divisorObject, scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param divisorObject Divisor decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divide(Object divisorObject, int scale, RoundingMode roundingMode) {
+			setScaleCore(scale, roundingMode);
+			_log(scale, roundingMode);
+			return this.divide(divisorObject);
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Uses reserved scale and rounding mode.
+		 * @param divisorObject Divisor decimal object.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper dividePercent(Object divisorObject) {
+			this.value = quotientPercent(this.value, divisorObject, this.scale, this.roundingMode);
+			_log("divide into percent", divisorObject);
+			return this;
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param divisorObject Divisor decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper dividePercent(Object divisorObject, int scale, int roundingMode) {
+			return dividePercent(divisorObject, scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param divisorObject Divisor decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper dividePercent(Object divisorObject, int scale, RoundingMode roundingMode) {
+			setScaleCore(scale, roundingMode);
+			_log(scale, roundingMode);
+			return this.dividePercent(divisorObject);
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value.<br>
+		 * Uses reserved scale and rounding mode.
+		 * @param dividendObject Dividend decimal object.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisor(Object dividendObject) {
+			this.value = quotient(dividendObject, this.value, this.scale, this.roundingMode);
+			_log("divide as divisor", dividendObject);
+			return this;
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param dividendObject Dividend decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, int roundingMode) {
+			return divideAsDivisor(dividendObject, scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param dividendObject Dividend decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisor(Object dividendObject, int scale, RoundingMode roundingMode) {
+			setScaleCore(scale, roundingMode);
+			_log(scale, roundingMode);
+			return divideAsDivisor(dividendObject);
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Uses reserved scale and rounding mode.
+		 * @param dividendObject Dividend decimal object.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisorPercent(Object dividendObject) {
+			this.value = quotientPercent(dividendObject, this.value, this.scale, this.roundingMode);
+			_log("divide as divisor into percent", dividendObject);
+			return this;
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param dividendObject Dividend decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, int roundingMode) {
+			return divideAsDivisorPercent(dividendObject, scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value, and then multiplies by {@code 100} to get a percentage.<br>
+		 * Accepts the new scale and rounding mode for current and later calculation.
+		 * @param dividendObject Dividend decimal object.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
+		 * @see DecimalUtils#quotient(Object, Object, int, RoundingMode)
+		 */
+		public DecimalWrapper divideAsDivisorPercent(Object dividendObject, int scale, RoundingMode roundingMode) {
+			setScaleCore(scale, roundingMode);
+			_log(scale, roundingMode);
+			return divideAsDivisorPercent(dividendObject);
+		}
+
+		/**
+		 * Divides the reserved value by the target decimal to reserve the remainder.
+		 * @param divisorObject Divisor decimal object.
+		 * @see DecimalUtils#mod(Object, Object)
+		 */
+		public DecimalWrapper mod(Object divisorObject) {
+			this.value = DecimalUtils.mod(this.value, divisorObject);
+			_log("mod", divisorObject);
+			return this;
+		}
+
+		/**
+		 * Divides the target decimal by the reserved value to reserve the remainder.
+		 * @param dividendObject Divisor decimal object.
+		 * @see DecimalUtils#mod(Object, Object)
+		 */
+		public DecimalWrapper modAsDivisor(Object dividendObject) {
+			this.value = DecimalUtils.mod(dividendObject, this.value);
+			_log("mod", dividendObject);
+			return this;
+		}
+
+		/**
+		 * Accepts new scale for later calculation.
+		 * @param scale Number of decimal places to be reserved.
+		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
+		 */
+		public DecimalWrapper setScale(int scale) {
+			setScaleCore(scale, this.roundingMode);
+			this.value = DecimalUtils.setScale(this.value, scale, this.roundingMode);
+			_log(scale, this.roundingMode);
+			return this;
+		}
+
+		/**
+		 * Accepts the new scale and rounding mode for later calculation.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode to be reserved using int value preset in <b>BigDecimal</b>.
+		 * @see DecimalUtils#setScale(Object, int)
+		 */
+		public DecimalWrapper setScale(int scale, int roundingMode) {
+			return setScale(scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Accepts the new scale and rounding mode for later calculation.
+		 * @param scale Number of decimal places to be reserved.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved.
+		 * @see DecimalUtils#setScale(Object, int, RoundingMode)
+		 */
+		public DecimalWrapper setScale(int scale, RoundingMode roundingMode) {
+			setScaleCore(scale, roundingMode);
+			this.value = DecimalUtils.setScale(this.value, scale, roundingMode);
+			_log(scale, roundingMode);
+			return this;
+		}
+
+		private void setScaleCore(int scale, RoundingMode roundingMode) {
+			this.scale = scale;
+			this.roundingMode = roundingMode;
+			this.roundingModeName = ROUNDING_MODE_NAME.get(roundingMode);
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance comparing
+
+		/**
+		 * Evaluates if the reserved value is equal to the target decimal.
+		 * @param comparandObject Target decimal object to be compared.
+		 * @return {@code true} if equal.
+		 * @see DecimalUtils#compare(Object, Object)
+		 */
+		public boolean isEquivalentTo(Object comparandObject) {
+			return compareW0(this.value, comparandObject) == 0;
+		}
+
+		/**
+		 * Evaluates if the reserved value is greater than the target decimal.
+		 * @param comparandObject Target decimal object to be compared.
+		 * @return {@code true} if greater than.
+		 * @see DecimalUtils#compare(Object, Object)
+		 */
+		public boolean isGreaterThan(Object comparandObject) {
+			return compareW0(this.value, comparandObject) == 1;
+		}
+
+		/**
+		 * Evaluates if the reserved value is greater than or equal to the target decimal.
+		 * @param comparandObject Target decimal object to be compared.
+		 * @return {@code true} if not less than.
+		 * @see DecimalUtils#compare(Object, Object)
+		 */
+		public boolean isGreaterEqual(Object comparandObject) {
+			int compareResult = compareW0(this.value, comparandObject);
+			return compareResult == 0 || compareResult == 1;
+		}
+
+		/**
+		 * Evaluates if the reserved value is less than the target decimal.
+		 * @param comparandObject Target decimal object to be compared.
+		 * @return {@code true} if less than.
+		 * @see DecimalUtils#compare(Object, Object)
+		 */
+		public boolean isLessThan(Object comparandObject) {
+			return compareW0(this.value, comparandObject) == -1;
+		}
+
+		/**
+		 * Evaluates if the reserved value is less than or equal to the target decimal.
+		 * @param comparandObject Target decimal object to be compared.
+		 * @return {@code true} if not greater than.
+		 * @see DecimalUtils#compare(Object, Object)
+		 */
+		public boolean isLessEqual(Object comparandObject) {
+			int compareResult = compareW0(this.value, comparandObject);
+			return compareResult == 0 || compareResult == -1;
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance output
+
+		/**
+		 * Gets the reserved value.
+		 * @return <b>BigDecimal</b> value.
+		 */
+		public BigDecimal value() {
+			return this.value;
+		}
+
+		/**
+		 * Extracts the integral part of the reserved value.
+		 * @return <b>BigDecimal</b> value.
+		 * @see DecimalUtils#getIntegralPart(Object)
+		 */
+		public BigDecimal integralPart() {
+			return getIntegralPart(this.value);
+		}
+
+		/**
+		 * Extracts the fractional part of the reserved value.
+		 * @return <b>BigDecimal</b> value.
+		 * @see DecimalUtils#getFractionalPart(Object)
+		 */
+		public BigDecimal fractionalPart() {
+			return getFractionalPart(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into an <b>Integer</b> object.
+		 * @return Wrapped <b>Integer</b> value.
+		 * @see DecimalUtils#toInteger(Object)
+		 */
+		public Integer integerValue() {
+			return toInteger(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into a <b>Long</b> object.
+		 * @return Wrapped <b>Long</b> value.
+		 * @see DecimalUtils#toLong(Object)
+		 */
+		public Long longValue() {
+			return toLong(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into a <b>Double</b> object.
+		 * @return Wrapped <b>Double</b> value.
+		 * @see DecimalUtils#toDouble(Object)
+		 */
+		public Double doubleValue() {
+			return toDouble(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into a plain <b>String</b> char sequence without any extra operation.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#stringify(Object)
+		 */
+		public String stringify() {
+			return DecimalUtils.stringify(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#dress(Object)
+		 */
+		public String dress() {
+			return DecimalUtils.dress(this.value);
+		}
+
+		/**
+		 * Wraps the reserved value into a <b>String</b> char sequence with thousands separators and 2 decimal places.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#dress2DP(Object)
+		 */
+		public String dress2DP() {
+			return DecimalUtils.dress2DP(this.value);
+		}
+
+		/**
+		 * Formats the reserved value into a <b>String</b> char sequence with the specified format.<br>
+		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
+		 * @param formatPattern Target number format presented by a <b>String</b> char sequence.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#format(Object, String)
+		 */
+		public String format(String formatPattern) {
+			return DecimalUtils.format(this.value, formatPattern);
+		}
+
+		/**
+		 * Formats the reserved value into a <b>String</b> char sequence with the specified format.<br>
+		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
+		 * @param format Target number format presented by a {@link DecimalFormat} object.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#format(Object, String)
+		 */
+		public String format(DecimalFormat format) {
+			return DecimalUtils.format(this.value, format);
+		}
+
+		/**
+		 * Formats the reserved value into a <b>String</b> char sequence with pecentage format.<br>
+		 * Returns an empty <b>String</b> char sequence if the reserved value cannot be formatted correctly.
+		 * @param decimalPlace Number of decimal places to be retained.
+		 * @return Wrapped and formatted <b>String</b> char sequence.
+		 * @see DecimalUtils#percent(Object, Integer)
+		 */
+		public String percent(Integer decimalPlace) {
+			return DecimalUtils.percent(this.value, decimalPlace);
+		}
+
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// instance log
+
+		private void _log(String command) {
+			this.log.append(command);
+			this.log.append("\n");
+		}
+
+		private void _log(String command, Object... params) {
+			boolean isMultipleParams = params.length > 1;
+			this.log.append(command).append(" ").append(isMultipleParams ? "(" : "");
+			for (int index = 0; index < params.length; index ++) {
+				BigDecimal param = parseDecimal(params[index]);
+				this.log.append(param != null ? param.toPlainString() : "null");
+				if (index < params.length - 1) {
+					this.log.append(", ");
+				}
+			}
+			this.log.append(isMultipleParams ? ")" : "");
+			if (command.contains("divide")) {
+				this.log.append(" (").append(this.scale).append(", ").append(this.roundingModeName).append(")");
+			}
+			this.log.append(", current value: ").append(this.value.toPlainString());
+			this.log.append("\n");
+		}
+
+		private void _log(int scale, RoundingMode roundingMode) {
+			this.log.append("set scale: ").append(scale).append(", roundingMode: ").append(ROUNDING_MODE_NAME.get(roundingMode));
+			this.log.append("\n");
+		}
+
+		/**
+		 * Output logs.
+		 * @return <b>String</b> logs.
+		 */
+		public String getLog() {
+			return this.log.toString();
+		}
+
+	}
+
+	/**
+	 * A Wrapper class of <b>BigDecimal</b> for tax calculation.<br>
+	 * Reserves scale and rounding mode for calculation and calculating results in the sequence of
+	 * <b>[</b><b>payAmount</b>, <b>taxAmount</b>, <b>allAmount</b><b>]</b>.<br>
+	 * The scale setting is used for amount calculating and then tax calculating.<br>
+	 * All calculation methods return the instance itself, allowing for method chaining.
+	 */
+	public static class TaxWrapper {
+
+		private final int scale;
+		private final RoundingMode roundingMode;
+		private final DecimalWrapper payAmount;
+		private final DecimalWrapper taxAmount;
+		private final DecimalWrapper allAmount;
+
+		/**
+		 * Creates a new instance for proceeding tax calculation.<br>
+		 * With default scale of {@value #DEFAULT_SCALE}.<br>
+		 * With default rounding mode of {@link RoundingMode#HALF_UP}.
+		 */
+		public TaxWrapper() {
+			this(DEFAULT_SCALE, DEFAULT_ROUNDING_MODE);
+		}
+
+		/**
+		 * Creates a new instance for proceeding tax calculation.
+		 * @param scale Number of decimal places to be reserved for later calculation.
+		 * @param roundingMode Rounding mode to be reserved for later calculation, using int value preset in <b>BigDecimal</b>.
+		 */
+		public TaxWrapper(int scale, int roundingMode) {
+			this(scale, valueOf(roundingMode));
+		}
+
+		/**
+		 * Creates a new instance for proceeding tax calculation.
+		 * @param scale Number of decimal places to be reserved for later calculation.
+		 * @param roundingMode Rounding mode presented by enum of {@link RoundingMode} to be reserved for later calculation.
+		 */
+		public TaxWrapper(int scale, RoundingMode roundingMode) {
+			this.scale = scale;
+			this.roundingMode = roundingMode;
+			this.payAmount = new DecimalWrapper(this.scale, this.roundingMode);
+			this.taxAmount = new DecimalWrapper(this.scale, this.roundingMode);
+			this.allAmount = new DecimalWrapper(this.scale, this.roundingMode);
+		}
+
+		/**
+		 * Gets the calculated and summed pay amount value.
+		 * @return <b>DecimalWrapper</b> value.
+		 */
+		public DecimalWrapper getPayAmount() {
+			return this.payAmount;
+		}
+
+		/**
+		 * Gets the calculated and summed tax amount value.
+		 * @return <b>DecimalWrapper</b> value.
+		 */
+		public DecimalWrapper getTaxAmount() {
+			return this.taxAmount;
+		}
+
+		/**
+		 * Gets the calculated and summed all amount value.
+		 * @return <b>DecimalWrapper</b> value.
+		 */
+		public DecimalWrapper getAllAmount() {
+			return this.allAmount;
+		}
+
+		/**
+		 * Calculates in tax according to the specified count, unit price and tax rate.<br>
+		 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+		 * <pre><b><i>Eg.:</i></b>&#9;addInTax("100", "10", "0.1") [scale = 0, roundingMode = HALF_UP] ->
+		 * &#9;&#9;[payAmount = 909, taxAmount = 91, allAmount = 1000]</pre>
+		 * @param unitPriceObject Target object contains unit price information.
+		 * @param countObject Target object contains count information.
+		 * @param taxRateObject Target object contains tax rate information in percent format.
+		 */
+		public TaxWrapper addInTax(Object unitPriceObject, Object countObject, Object taxRateObject) {
+			return addInTax(calculateAmount(unitPriceObject, countObject), taxRateObject);
+		}
+
+		/**
+		 * Calculates in tax according to the specified count, unit price and tax rate.<br>
+		 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+		 * <pre><b><i>Eg.:</i></b>&#9;addInTax("1000", "0.1") [scale = 0, roundingMode = HALF_UP] ->
+		 * &#9;&#9;[payAmount = 909, taxAmount = 91, allAmount = 1000]</pre>
+		 * @param amountObject Target object contains amount information.
+		 * @param taxRateObject Target object contains tax rate information in percent format.
+		 */
+		public TaxWrapper addInTax(Object amountObject, Object taxRateObject) {
+			this.allAmount.add(parseDecimal(amountObject));
+			this.taxAmount.add(calculateTaxAmount(this.allAmount.value(), taxRateObject, true));
+			this.payAmount.add(this.allAmount.value()).subtract(this.taxAmount.value());
+			return this;
+		}
+
+		/**
+		 * Calculates out tax according to the specified count, unit price and tax rate.<br>
+		 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+		 * <pre><b><i>Eg.:</i></b>&#9;addOutTax("100", "10", "0.1") [scale = 0, roundingMode = HALF_UP] ->
+		 * &#9;&#9;[payAmount = 1000, taxAmount = 100, allAmount = 1100]</pre>
+		 * @param unitPriceObject Target object contains unit price information.
+		 * @param countObject Target object contains count information.
+		 * @param taxRateObject Target object contains tax rate information in percent format.
+		 */
+		public TaxWrapper addOutTax(Object unitPriceObject, Object countObject, Object taxRateObject) {
+			return addOutTax(calculateAmount(unitPriceObject, countObject), taxRateObject);
+		}
+
+		/**
+		 * Calculates out tax according to the specified count, unit price and tax rate.<br>
+		 * Uses {@link #parseDecimal(Object)} for automatic parsing.
+		 * <pre><b><i>Eg.:</i></b>&#9;addOutTax("1000", "0.1") [scale = 0, roundingMode = HALF_UP] ->
+		 * &#9;&#9;[payAmount = 1000, taxAmount = 100, allAmount = 1100]</pre>
+		 * @param amountObject Target object contains amount information.
+		 * @param taxRateObject Target object contains tax rate information in percent format.
+		 */
+		public TaxWrapper addOutTax(Object amountObject, Object taxRateObject) {
+			this.payAmount.add(parseDecimal(amountObject));
+			this.taxAmount.add(calculateTaxAmount(this.payAmount.value(), taxRateObject, false));
+			this.allAmount.add(this.payAmount.value(), this.taxAmount.value());
+			return this;
+		}
+
+		private BigDecimal calculateAmount(Object unitPriceObject, Object countObject) {
+			BigDecimal result = ZERO;
+			if (!isUnusableOr0(unitPriceObject) && !isUnusableOr0(countObject)) {
+				result = setScale(product(unitPriceObject, countObject), this.scale, this.roundingMode);
+			}
+			return result;
+		}
+
+		private BigDecimal calculateTaxAmount(BigDecimal amount, Object taxRateObject, boolean inTax) {
+			BigDecimal result = ZERO;
+			if (!isNullOr0(amount) && !isUnusableOr0(taxRateObject)) {
+				if (inTax) {
+					result = quotient(product(amount, taxRateObject), sum(PERCENT_ADDEND, taxRateObject), this.scale, this.roundingMode);
+				} else {
+					result = quotient(product(amount, taxRateObject), PERCENT_ADDEND, this.scale, this.roundingMode);
+				}
+			}
+			return result;
+		}
+
+	}
+
+	/**
 	 * A wrapper class of <b>&lt;Type&gt; Map&lt;Object, Type&gt;</b>.<br>
 	 * Used in {@link #select(Object, DecimalOption)} to quickly create an option scope.
 	 * <pre><b><i>Eg.:</i></b>&#9;DecimalOption&lt;String&gt; scope = DecimalOption.build(10, "a").and("20", "b"));
-	 * &#9;&#9;&#9; -> [[10, "a"], [20, "b"]]
+	 * &#9;&#9; -> [[10, "a"], [20, "b"]]
 	 * &#9;DecimalOption&lt;Integer&gt; scope = DecimalOption.build("1", 1).and("2", 2));
-	 * &#9;&#9;&#9; -> [[1, 1], [2, 2]]</pre>
+	 * &#9;&#9; -> [[1, 1], [2, 2]]</pre>
 	 */
 	public static class DecimalOption<Type> {
 
@@ -2599,6 +2747,7 @@ public class DecimalUtils {
 
 	private static final BigDecimal DEPERCENT_MULTIPLICATOR = new BigDecimal("0.01");
 	private static final BigDecimal PERCENT_MULTIPLICATOR = new BigDecimal("100");
+	private static final BigDecimal PERCENT_ADDEND = ONE;
 
 	private static final DecimalFormat FORMAT_COMMA_0 = new DecimalFormat("##,##0");
 	private static final DecimalFormat FORMAT_COMMA_2 = new DecimalFormat("##,##0.00");
@@ -2651,158 +2800,6 @@ public class DecimalUtils {
 		PRECEDENCE_MAP = Collections.unmodifiableMap(precedenceMap);
 		OPERATOR_EVALUATION_MAP = Collections.unmodifiableMap(operatorEvaluationMap);
 		WRAPPER_VALUE_GETTER_MAP = Collections.unmodifiableMap(wrapperValueGetterMap);
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// tax calculator
-
-	private static final int OUT_TAX = 0;
-	private static final int IN_TAX = 1;
-	private static final int DEFAULT_IN_OUT_TAX_FLG = OUT_TAX;
-	private static final int TAX_FLOOR = 0;
-	private static final int TAX_CEIL = 2;
-	private static final BigDecimal PERCENT_ADDEND = PERCENT_MULTIPLICATOR;
-
-	/**
-	 * Calculates tax according to the specified amount and unit price.<br>
-	 * Returns an array of results in the sequence of <b>{</b><b>mediumAmount</b>,
-	 * <b>payAmount</b>, <b>taxAmount</b>, <b>allAmount</b><b>}</b>.<br>
-	 * The scale setting of <b>mediumAmounts</b> takes priority, followed by <b>taxAmounts</b>.<br>
-	 * Supports instances of: <b>BigDecimal</b>, <b>Integer(int)</b>, <b>Long(long)</b>, <b>Double(double)</b>, <b>String</b>.<br>
-	 * Passing {@code null} or unsupported arguments will throw an <b>IllegalArgumentException</b>.<br>
-	 * <b>Integer</b>, <b>Long</b> and <b>String</b>
-	 * will return results with the default scale of {@value #DEFAULT_SCALE}, while <b>Double</b> {@value #DEFAULT_DECIMAL_SCALE}.
-	 * @param <ReturnType> Specify an array of instances of which class should be returned.
-	 * @param amountObject Target object contains amount information.
-	 * @param unitPriceObject Target object contains unit price information.
-	 * @param taxRateObject Target object contains tax rate information in percent format.
-	 * @param inOutTaxFlgObject Specify the tax calculation method. {@value #OUT_TAX} means out tax while {@value #IN_TAX} in tax.
-	 * 		Passing unparseable arguments will use {@value #DEFAULT_IN_OUT_TAX_FLG} by default.
-	 * @param fractionKbnObject Specify which rounding mode to use. {@value #TAX_FLOOR} represents {@link RoundingMode#FLOOR},
-	 * 		while 1 {@link RoundingMode#HALF_UP}, {@value #TAX_CEIL} {@link RoundingMode#CEILING}.
-	 * 		Passing null will use {@link RoundingMode#HALF_UP} by default.
-	 * @param returnClass Class object of ReturnType.
-	 * @return An array of tax results in specified sequence.
-	 */
-	public static <ReturnType> ReturnType[] calTax(Object amountObject, Object unitPriceObject, Object taxRateObject,
-			Object inOutTaxFlgObject, Object fractionKbnObject, Class<ReturnType> returnClass) {
-		Integer inOutTaxFlgInteger = toInteger(inOutTaxFlgObject);
-		int inOutTaxFlg = inOutTaxFlgInteger != null ? inOutTaxFlgInteger : DEFAULT_IN_OUT_TAX_FLG;
-		RoundingMode roundingMode = getRoundingModeFromFractionKbn(fractionKbnObject);
-		BigDecimal amount = parseDecimal(amountObject), unitPrice = parseDecimal(unitPriceObject), taxRate = parseDecimal(taxRateObject);
-		BigDecimal[] result = null;
-		if (!(amount == null || unitPrice == null || taxRate == null)) {
-			int scale = (returnClass == Double.class || returnClass == double.class) ? DEFAULT_DECIMAL_SCALE : DEFAULT_SCALE;
-			BigDecimal medium = setScale(product(amount, unitPrice), scale, roundingMode);
-			if (isSameDecimal(ZERO, taxRate)) {
-				result = new BigDecimal[] {medium, medium, ZERO, medium};
-			} else if (OUT_TAX == inOutTaxFlg) {
-				BigDecimal outTax = quotient(product(medium, taxRate), PERCENT_ADDEND, scale, roundingMode);
-				BigDecimal outAll = sum(medium, outTax);
-				result = new BigDecimal[] {medium, medium, outTax, outAll};
-			} else if (IN_TAX == inOutTaxFlg) {
-				BigDecimal inTax = quotient(product(medium, taxRate), sum(PERCENT_ADDEND, taxRate), scale, roundingMode);
-				BigDecimal inPay = sum(medium, minus(inTax));
-				result = new BigDecimal[] {medium, inPay, inTax, medium};
-			}
-		}
-		return getParameterizedTaxResult(result, returnClass);
-	}
-
-	/**
-	 * Calculates tax according to the specified pay amount.<br>
-	 * Returns an array of results in the sequence of <b>{</b><b>mediumAmount</b>,
-	 * <b>payAmount</b>, <b>taxAmount</b>, <b>allAmount</b><b>}</b>.<br>
-	 * Supports instances of: <b>BigDecimal</b>, <b>Integer(int)</b>, <b>Long(long)</b>, <b>Double(double)</b>, <b>String</b>.<br>
-	 * Passing {@code null} or unsupported arguments will throw an <b>IllegalArgumentException</b>.
-	 * @deprecated There may be slight miscalculation because origin parameters are calculated from tax result.
-	 * @param <ReturnType> Specify an array of instances of which class should be returned.
-	 * @param payAmountObject Target object contains pay amount information.
-	 * @param taxRateObject Target object contains tax rate information in percent format.
-	 * @param fractionKbnObject Specify which rounding mode to use. {@value #TAX_FLOOR} represents {@link RoundingMode#FLOOR},
-	 * 		while 1 {@link RoundingMode#HALF_UP}, {@value #TAX_CEIL} {@link RoundingMode#CEILING}.
-	 * 		Passing null will use {@link RoundingMode#HALF_UP} by default.
-	 * @param roundingScale Specify rounding scale. Passing null will use {@value #DEFAULT_SCALE} by default.
-	 * @param returnClass Class object of ReturnType.
-	 * @return An array of tax results in specified sequence.
-	 */
-	@Deprecated
-	public static <ReturnType> ReturnType[] calTaxFromPayAmount(Object payAmountObject, Object taxRateObject, Object fractionKbnObject,
-			Integer roundingScale, Class<ReturnType> returnClass) {
-		RoundingMode roundingMode = getRoundingModeFromFractionKbn(fractionKbnObject);
-		BigDecimal payAmount = parseDecimal(payAmountObject), taxRate = parseDecimal(taxRateObject);
-		BigDecimal[] result = null;
-		if (!(payAmount == null || taxRate == null)) {
-			if (isSameDecimal(ZERO, taxRate)) {
-				result = new BigDecimal[] {ZERO, payAmount, ZERO, payAmount};
-			} else {
-				BigDecimal outTax = quotient(product(payAmount, taxRate), PERCENT_ADDEND, roundingScale, roundingMode);
-				BigDecimal outAll = sum(payAmount, outTax);
-				result = new BigDecimal[] {ZERO, setScale(payAmount, roundingScale), outTax, outAll};
-			}
-		}
-		return getParameterizedTaxResult(result, returnClass);
-	}
-
-	/**
-	 * Calculates tax according to the specified all amount.<br>
-	 * Returns an array of results in the sequence of <b>{</b><b>mediumAmount</b>,
-	 * <b>payAmount</b>, <b>taxAmount</b>, <b>allAmount</b><b>}</b>.<br>
-	 * Supports instances of: <b>BigDecimal</b>, <b>Integer(int)</b>, <b>Long(long)</b>, <b>Double(double)</b>, <b>String</b>.<br>
-	 * Passing {@code null} or unsupported arguments will throw an <b>IllegalArgumentException</b>.
-	 * @deprecated There may be slight miscalculation because origin parameters are calculated from tax result.
-	 * @param <ReturnType> Specify an array of instances of which class should be returned.
-	 * @param allAmountObject Target object contains all amount information.
-	 * @param taxRateObject Target object contains tax rate information in percent format.
-	 * @param fractionKbnObject Specify which rounding mode to use. {@value #TAX_FLOOR} represents {@link RoundingMode#FLOOR},
-	 * 		while 1 {@link RoundingMode#HALF_UP}, {@value #TAX_CEIL} {@link RoundingMode#CEILING}.
-	 * 		Passing null will use {@link RoundingMode#HALF_UP} by default.
-	 * @param roundingScale Specify rounding scale. Passing null will use {@value #DEFAULT_SCALE} by default.
-	 * @param returnClass Class object of ReturnType.
-	 * @return An array of tax results in specified sequence.
-	 */
-	@Deprecated
-	public static <ReturnType> ReturnType[] calTaxFromAllAmount(Object allAmountObject, Object taxRateObject, Object fractionKbnObject,
-			Integer roundingScale, Class<ReturnType> returnClass) {
-		RoundingMode roundingMode = getRoundingModeFromFractionKbn(fractionKbnObject);
-		BigDecimal allAmount = parseDecimal(allAmountObject), taxRate = parseDecimal(taxRateObject);
-		BigDecimal[] result = null;
-		if (!(allAmount == null || taxRate == null)) {
-			if (isSameDecimal(ZERO, taxRate)) {
-				result = new BigDecimal[] {ZERO, allAmount, ZERO, allAmount};
-			} else {
-				BigDecimal outTax = quotient(product(allAmount, taxRate), sum(PERCENT_ADDEND, taxRate), roundingScale, roundingMode);
-				BigDecimal outPay = sum(allAmount, minus(outTax));
-				result = new BigDecimal[] {ZERO, outPay, outTax, setScale(allAmount, roundingScale)};
-			}
-		}
-		return getParameterizedTaxResult(result, returnClass);
-	}
-
-	private static RoundingMode getRoundingModeFromFractionKbn(Object fractionKbnObject) {
-		Integer fractionKbn = toInteger(fractionKbnObject);
-		return isSameInteger(TAX_FLOOR, fractionKbn) ? FLOOR : isSameInteger(TAX_CEIL, fractionKbn) ? CEILING : HALF_UP;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <ReturnType> ReturnType[] getParameterizedTaxResult(BigDecimal[] result, Class<ReturnType> returnClass) {
-		if (returnClass == null) {
-			throw new IllegalArgumentException("Null is passed in for returning type which is not permitted");
-		}
-		if (result == null) {
-			return null;
-		} else if (returnClass == BigDecimal.class) {
-			return (ReturnType[]) result;
-		} else if (returnClass == Integer.class || returnClass == int.class) {
-			return (ReturnType[]) new Integer[] {result[0].intValue(), result[1].intValue(), result[2].intValue(), result[3].intValue()};
-		} else if (returnClass == Long.class || returnClass == long.class) {
-			return (ReturnType[]) new Long[] {result[0].longValue(), result[1].longValue(), result[2].longValue(), result[3].longValue()};
-		} else if (returnClass == Double.class || returnClass == double.class) {
-			return (ReturnType[]) new Double[] {result[0].doubleValue(), result[1].doubleValue(), result[2].doubleValue(), result[3].doubleValue()};
-		} else if (returnClass == String.class) {
-			return (ReturnType[]) new String[] {stringify(result[0]), stringify(result[1]), stringify(result[2]), stringify(result[3])};
-		}
-		throw new IllegalArgumentException("Unsupported type is passed in for returning type which is not permitted");
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////

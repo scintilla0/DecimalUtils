@@ -3,6 +3,9 @@ A utility class that provides an assortment of calculation and output methods.
 
 ### Change log
 
+#### 1.4.0 (2025-06-13)
+*	Integrate the methods related to tax calculation into the instance class **TaxWrapper**.
+
 #### 1.3.16 (2025-04-07)
 *	Javadoc rectified.
 
